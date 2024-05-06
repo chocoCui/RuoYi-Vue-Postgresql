@@ -72,7 +72,6 @@
       <el-button class="el-button--primary" @click="home">雅安</el-button>
 
     </el-form>
-
     <!---------简单标绘功能------>
     <el-form class="noteContainer">
       <div class="modelAdj">标绘工具</div>
@@ -112,11 +111,9 @@
       </span>
     </div>
     <addMarkCollectionDialog :addMarkDialogFormVisible.sync="addMarkDialogFormVisible" :addMarkForm.sync="addMarkForm"
-                             @clearMarkDialogForm="resetAddMarkCollection"/>
+                             @clearMarkDialogForm="resetAddMarkCollection" @wsSend="websocketsend"/>
     <commonPanel :visible="popupVisible" :position="popupPosition" :popupData="popupData" @delete="deleteMark"/>
     <!-------------------------->
-
-
   </div>
 </template>
 
@@ -174,6 +171,7 @@ export default {
       modelStatus: true,
       modelStatusContent: "隐藏当前模型",
       modelName:""
+      //
     };
   },
   mounted() {
@@ -237,10 +235,80 @@ export default {
     this.createMarkPhoteList()
     cesiumDrawInit.init(window.viewer);
     // window.modelList = {}
-
-
+    this.initWebSocket()
   },
   methods: {
+    initWebSocket(){
+      const wsuri = "ws://localhost:8080/ws/123214";
+      if(typeof(WebSocket) == "undefined") {
+        console.log("您的浏览器不支持WebSocket");
+      }else{
+        console.log(wsuri)
+        this.websock = new WebSocket(wsuri);
+        this.websock.onmessage = this.websocketonmessage;
+        this.websock.onopen = this.websocketonopen;
+        this.websock.onerror = this.websocketonerror;
+        this.websock.onclose = this.websocketclose;
+      }
+    },
+    //连接建立之后执行send方法发送数据
+    websocketonopen(){
+      let actions = {"test":"我已在线"};
+      this.websocketsend(JSON.stringify(actions));
+    },
+    //连接建立失败重连
+    websocketonerror(){
+      this.initWebSocket();
+    },
+    //数据接收
+    websocketonmessage(e){
+      // this.$modal.msg(e.data);
+      try {
+        let markType = JSON.parse(e.data).type // 标绘的类型（add、delete）
+        let markData = JSON.parse(e.data).data
+        if(markType==="add"){
+          // console.log("add",markData)
+          this.wsAddMark(markData)
+        }else if(markType === "delete"){
+          console.log("delete")
+        }
+      } catch (err){
+        console.log(e.data);
+      }
+    },
+    //数据发送
+    websocketsend(Data){
+      this.websock.send(Data);
+    },
+    //关闭
+    websocketclose(e){
+      console.log('断开连接',e);
+    },
+    wsAddMark(data){
+      window.viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(Number(data.lon) , Number(data.lat), Number(data.height)),
+        billboard: {
+          image: data.img,
+          // width: 200,//图片宽度,单位px
+          // height: 200,//图片高度，单位px // 会影响point大小，离谱
+          eyeOffset: new Cesium.Cartesian3(0, 0, 0),//与坐标位置的偏移距离
+          color: Cesium.Color.WHITE.withAlpha(1),//颜色
+          scale: 0.8,//缩放比例
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+          depthTest: false,//禁止深度测试但是没有下面那句有用
+          disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+        },
+        properties:{
+          type:data.type,
+          time:data.time,
+          name:data.name,
+          lon:data.lon,
+          lat:data.lat,
+          describe:data.describe,
+        }
+      })
+    },
+    // ------------------------------
     isTerrainLoaded() {
       let terrainProvider = window.viewer.terrainProvider;
       if (terrainProvider instanceof Cesium.EllipsoidTerrainProvider) {

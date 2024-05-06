@@ -75,8 +75,10 @@ export default {
     },
     //确认添加标注
     commitAddNote(){
+      let that = this
       this.addIcon(this.form)
       window.noteHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      this.$emit('wsSend',JSON.stringify(that.form))
       // window.noteHandler.destroy()//使用后销毁handler，销毁后window中还有noteHandler吗？
       this.$emit('clearMarkDialogForm') // 调用父组件中clearMarkDialogForm对应的方法，重置标绘信息填写框里的信息
       Message({
