@@ -78,7 +78,7 @@ export default {
       let that = this
       this.addIcon(this.form)
       window.noteHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-      this.$emit('wsSend',JSON.stringify(that.form))
+      this.$emit('wsSend',JSON.stringify({type:"point",operate:"add",data:that.form}))
       // window.noteHandler.destroy()//使用后销毁handler，销毁后window中还有noteHandler吗？
       this.$emit('clearMarkDialogForm') // 调用父组件中clearMarkDialogForm对应的方法，重置标绘信息填写框里的信息
       Message({
@@ -90,6 +90,7 @@ export default {
     addIcon(pos){
       let that = this
       window.viewer.entities.add({
+        id:that.form.id,
         position: Cesium.Cartesian3.fromDegrees(Number(pos.lon) , Number(pos.lat), Number(pos.height)),
         billboard: {
           image: that.form.img,
@@ -109,6 +110,7 @@ export default {
           lon:that.form.lon,
           lat:that.form.lat,
           describe:that.form.describe,
+          id:that.form.id
         }
       })
     },

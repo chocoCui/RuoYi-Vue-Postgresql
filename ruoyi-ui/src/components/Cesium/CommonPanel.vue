@@ -73,6 +73,7 @@ export default {
     // 删除标注
     deleteMark(){
       this.$emit('delete')
+      this.$emit('wsSend',JSON.stringify({type:"point",operate:"delete",id:window.selectedEntity.id}))
     }
   }
 };

@@ -162,7 +162,8 @@ function getTerrainProviderViewModelsArr() {
                 return new Cesium.CesiumTerrainProvider({
                     url: baseURL+'/geoserver/www/dem',
                     requestWaterMask: !0,
-                    requestVertexNormals: !0
+                    requestVertexNormals: !0,
+                    // isSct : false //是否为iServer发布的TIN地形服务,stk地形设置为false。
                 })
             }
         }),
@@ -178,7 +179,8 @@ function getTerrainProviderViewModelsArr() {
                 return new Cesium.CesiumTerrainProvider({
                     url: Cesium.IonResource.fromAssetId(1),
                     requestWaterMask: !0,
-                    requestVertexNormals: !0
+                    requestVertexNormals: !0,
+                    // isSct : false //是否为iServer发布的TIN地形服务,stk地形设置为false。
                 })
             }
         }),

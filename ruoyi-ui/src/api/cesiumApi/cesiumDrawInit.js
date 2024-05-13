@@ -1,21 +1,23 @@
 import Polyline from "./Polyline";
 import Polygon from "./Polygon";
+import ArrowDraw from "@/api/cesiumApi/ArrowDraw";
 
 let cesiumDrawInit = {
     lineLength: 0,
     // 一些初始化的操作
-    init(viewer) {
+    init(viewer,ws) {
         this.viewer = viewer
-        this.initDrawEdit();
+        this.initDrawEdit(ws);
     },
-    initDrawEdit() {
-        this.Polyline = new Polyline(this.viewer);
+    initDrawEdit(ws) {
+        this.Polyline = new Polyline(this.viewer,ws);
         // this.lineLength = this.Polyline.lineLength
-        this.Polygon = new Polygon(this.viewer);
+        this.Polygon = new Polygon(this.viewer,ws);
+        this.arrowDraw = new ArrowDraw(this.viewer)
     },
     //激活绘制线工具
-    drawActivatePolyline(type) { //type in Point Polyline Polygon
-        this.Polyline.activate(type);
+    drawActivatePolyline() {
+        this.Polyline.activate();
     },
     //激活绘制面工具
     drawActivatePolygon() {
@@ -29,6 +31,9 @@ let cesiumDrawInit = {
     drawPolylineStatus() {
         return this.Polyline.status
     },
-
+    arrowD(tp){
+      this.arrowDraw.init(this.viewer)
+      this.arrowDraw.draw(tp)
+    }
 }
 export default cesiumDrawInit;

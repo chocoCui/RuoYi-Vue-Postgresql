@@ -14,7 +14,7 @@
         <el-slider
             v-model="tz"
             show-input
-            :max="2000"
+            :max="10000"
             :min="-2000"
             :step="10"
             @change="changeHeight(tz)"
@@ -79,6 +79,7 @@
         <el-button class="el-button--primary" @click="showMarkCollection=!showMarkCollection">添加标注信息</el-button>
         <el-button class="el-button--primary" @click="drawP">量算面积</el-button>
         <el-button class="el-button--primary" @click="drawN">量算距离</el-button>
+<!--        <el-button class="el-button&#45;&#45;primary" @click="arrow('straightArrow')">ceshi</el-button>-->
         <el-button type="danger" class="el-button--primary" @click="deletePolygon" v-if="this.showPolygon">删除面
         </el-button>
         <el-button type="danger" class="el-button--primary" @click="deletePolyline" v-if="this.showPolyline">删除线
@@ -112,9 +113,10 @@
     </div>
     <addMarkCollectionDialog :addMarkDialogFormVisible.sync="addMarkDialogFormVisible" :addMarkForm.sync="addMarkForm"
                              @clearMarkDialogForm="resetAddMarkCollection" @wsSend="websocketsend"/>
-    <commonPanel :visible="popupVisible" :position="popupPosition" :popupData="popupData" @delete="deleteMark"/>
+    <commonPanel :visible="popupVisible" :position="popupPosition" :popupData="popupData" @delete="deleteMark" @wsSend="websocketsend"/>
     <!-------------------------->
   </div>
+
 </template>
 
 <script>
@@ -131,7 +133,7 @@ import {markPhotoList, matchMark, refenceMarkPhotoList} from "@/api/cesiumApi/to
 
 export default {
   components: {
-    addMarkCollectionDialog, commonPanel
+    addMarkCollectionDialog, commonPanel,//CesiumDraw
   },
   data: function () {
     return {
@@ -150,6 +152,7 @@ export default {
       message: null, // 添加点标绘的时候的弹窗相关
       addMarkDialogFormVisible: false, // 标绘信息填写对话框的显示和隐藏
       addMarkForm: { // 标绘信息填写数据
+        id:null,
         type: null,
         time: null,
         name: null,
@@ -170,8 +173,9 @@ export default {
       // ---------------------------------------------------
       modelStatus: true,
       modelStatusContent: "隐藏当前模型",
-      modelName:""
-      //
+      modelName:"",
+      //-------------ws---------------------
+      websock:null
     };
   },
   mounted() {
@@ -229,17 +233,26 @@ export default {
         altitudeShow.innerHTML = altiString;
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    // ---------------------------------------------------
+    this.initWebSocket()
     // 生成实体点击事件的handler
     this.entitiesClickPonpHandler()
     this.watchTerrainProviderChanged()
     this.createMarkPhoteList()
-    cesiumDrawInit.init(window.viewer);
-    // window.modelList = {}
-    this.initWebSocket()
+    cesiumDrawInit.init(window.viewer,this.websock);
+  },
+  destroyed() {
+    this.websock.close()
   },
   methods: {
+    arrow(tp){
+      console.log(tp)
+      cesiumDrawInit.arrowD(tp)
+    },
+    //------------------------------------------
     initWebSocket(){
-      const wsuri = "ws://localhost:8080/ws/123214";
+      const currentTime = Date.now();
+      const wsuri = "ws://localhost:8080/ws/"+currentTime;
       if(typeof(WebSocket) == "undefined") {
         console.log("您的浏览器不支持WebSocket");
       }else{
@@ -264,16 +277,36 @@ export default {
     websocketonmessage(e){
       // this.$modal.msg(e.data);
       try {
-        let markType = JSON.parse(e.data).type // 标绘的类型（add、delete）
-        let markData = JSON.parse(e.data).data
-        if(markType==="add"){
-          // console.log("add",markData)
-          this.wsAddMark(markData)
-        }else if(markType === "delete"){
-          console.log("delete")
+        let markType = JSON.parse(e.data).type
+        let markOperate = JSON.parse(e.data).operate // 标绘的（add、delete）
+        if(markOperate==="add"){
+          let markData = JSON.parse(e.data).data
+          this.wsAdd(markType,markData)
+        }
+        else if(markOperate === "delete"){
+          let id = JSON.parse(e.data).id
+          if(markType === "point"){
+            window.viewer.entities.removeById(id)
+          }
+          else if(markType === "polyline"){
+            let polyline = window.viewer.entities.getById(id)
+            let polylinePosition = polyline.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+            polylinePosition.pointPosition.forEach((item, index) => {
+              window.viewer.entities.remove(item)
+            })
+            window.viewer.entities.remove(polyline)
+          }
+          else if(markType === "polygon"){
+            let polygon = window.viewer.entities.getById(id)
+            let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+            polygonPosition.linePoint.forEach((item, index) => {
+              window.viewer.entities.remove(item)
+            })
+            window.viewer.entities.remove(polygon)
+          }
         }
       } catch (err){
-        console.log(e.data);
+        console.log(err,'error错咯');
       }
     },
     //数据发送
@@ -284,29 +317,95 @@ export default {
     websocketclose(e){
       console.log('断开连接',e);
     },
-    wsAddMark(data){
-      window.viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(Number(data.lon) , Number(data.lat), Number(data.height)),
-        billboard: {
-          image: data.img,
-          // width: 200,//图片宽度,单位px
-          // height: 200,//图片高度，单位px // 会影响point大小，离谱
-          eyeOffset: new Cesium.Cartesian3(0, 0, 0),//与坐标位置的偏移距离
-          color: Cesium.Color.WHITE.withAlpha(1),//颜色
-          scale: 0.8,//缩放比例
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
-          depthTest: false,//禁止深度测试但是没有下面那句有用
-          disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
-        },
-        properties:{
-          type:data.type,
-          time:data.time,
-          name:data.name,
-          lon:data.lon,
-          lat:data.lat,
-          describe:data.describe,
+    wsAdd(type,data){
+      if(type==="point"){
+        window.viewer.entities.add({
+          id:data.id,
+          position: Cesium.Cartesian3.fromDegrees(Number(data.lon) , Number(data.lat), Number(data.height)),
+          billboard: {
+            image: data.img,
+            // width: 200,//图片宽度,单位px
+            // height: 200,//图片高度，单位px // 会影响point大小，离谱
+            eyeOffset: new Cesium.Cartesian3(0, 0, 0),//与坐标位置的偏移距离
+            color: Cesium.Color.WHITE.withAlpha(1),//颜色
+            scale: 0.8,//缩放比例
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+            depthTest: false,//禁止深度测试但是没有下面那句有用
+            disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+          },
+          properties:{
+            type:data.type,
+            time:data.time,
+            name:data.name,
+            lon:data.lon,
+            lat:data.lat,
+            describe:data.describe,
+            id:data.id
+          }
+        })
+      }
+      else if(type==="polyline"){
+        let pointLinePoints = []
+        for(let i=0;i<data.positions.length;i++){
+          let p = window.viewer.entities.add({
+            position: data.positions[i],
+            id: data.id + 'point' + (i+1),
+            point: {
+              pixelSize: 10,
+              color: Cesium.Color.RED,
+              outlineWidth: 2,
+              outlineColor: Cesium.Color.DARKRED,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+              depthTest: false,//禁止深度测试但是没有下面那句有用
+              disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+            },
+          });
+          console.log(pointLinePoints)
+          pointLinePoints.push(p)
         }
-      })
+        window.viewer.entities.add({
+          id: data.id + 'polyline',
+          polyline:{
+            positions: data.positions,
+            width: 5,
+            material: Cesium.Color.YELLOW,
+            depthFailMaterial: Cesium.Color.YELLOW,
+            clampToGround: true,
+          },
+          properties: {
+            pointPosition: pointLinePoints,
+          }
+        })
+      }
+      else if(type === "polygon"){
+        let pointLinePoints = []
+        for(let i=0;i<data.positions.length;i++){
+          let p = window.viewer.entities.add({
+            position: data.positions[i],
+            id: data.id + 'polygonPoint' + (i+1),
+            point: {
+              color: Cesium.Color.SKYBLUE,
+              pixelSize: 10,
+              outlineColor: Cesium.Color.YELLOW,
+              outlineWidth: 3,
+              disableDepthTestDistance: Number.POSITIVE_INFINITY,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,},
+          });
+          pointLinePoints.push(p)
+          console.log(pointLinePoints,999)
+        }
+        window.viewer.entities.add({
+          id: data.id + "polygon",
+          polygon: {
+            hierarchy: data.positions,
+            material:new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
+            clampToGround: true,
+          },
+          properties: {
+            linePoint: pointLinePoints //存顶点的数组
+          }
+        })
+      }
     },
     // ------------------------------
     isTerrainLoaded() {
@@ -481,6 +580,7 @@ export default {
         that.addMarkForm.height = height
         that.addMarkForm.img = that.matchIcon(that.addMarkForm.type)
         that.addMarkForm.type = that.refenceTypeList[that.addMarkForm.type]
+        that.addMarkForm.id = Date.now()
         // 4-1打开弹窗
         that.addMarkDialogFormVisible = true // 打开填写信息的弹窗
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -527,7 +627,11 @@ export default {
     // 删除线
     deletePolyline() {
       let polyline = window.selectedEntity
-      console.log(polyline)
+      this.websocketsend(JSON.stringify({
+        type:"polyline",
+        operate:"delete",
+        id: polyline.id
+      }))
       let polylinePosition = polyline.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
       polylinePosition.pointPosition.forEach((item, index) => {
         window.viewer.entities.remove(item)
@@ -543,7 +647,12 @@ export default {
     // 删除面
     deletePolygon() {
       let polygon = window.selectedEntity//this.polygonPosition
-      let polygonPosition = polygon.properties.pointPositon.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
+      this.websocketsend(JSON.stringify({
+        type:"polygon",
+        operate:"delete",
+        id: polygon.id
+      }))
+      let polygonPosition = polygon.properties.pointPosition.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
       let posArr = [] // 转换成经纬度数组
       polygonPosition.forEach((item, index) => {
         let cartographicPosition = Cesium.Cartographic.fromCartesian(item)
@@ -630,7 +739,6 @@ export default {
       this.modelStatus = true
       this.modelStatusContent = "隐藏当前模型"
       this.modelName = modelName
-      // this.changeHeight(tz)
     },
     /**
      * @Description:初始化加载模型并贴地
@@ -674,6 +782,7 @@ export default {
           // console.log(Cesium.Math.toDegrees(cartographic.longitude))
           that.tz = 20 - Math.trunc(cartographic.height)//高度取整
           that.transferModel(tileset, 0, 0, that.tz, 0, 0, 0, 1, 1)//模型贴地
+          console.log(that.tz,Math.trunc(cartographic.height),123)
         }
       })
     },
@@ -945,6 +1054,10 @@ export default {
 </script>
 
 <style>
+.cesium-viewer-navigationContainer{
+  display: none!important;
+}
+
 #cesiumContainer {
   height: 100%;
   width: 100%;
