@@ -91,7 +91,7 @@ export default {
       // 验证码开关
       captchaEnabled: true,
       // 注册开关
-      register: false,
+      register: true,
       redirect: undefined
     };
   },
@@ -106,6 +106,9 @@ export default {
   created() {
     this.getCode();
     this.getCookie();
+  },
+  mounted() {
+    console.log(this.$refs.cn)
   },
   methods: {
     getCode() {

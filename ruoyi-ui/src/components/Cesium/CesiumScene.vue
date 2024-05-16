@@ -130,6 +130,7 @@ import addMarkCollectionDialog from "@/components/Cesium/addMarkCollectionDialog
 import commonPanel from "@/components/Cesium/CommonPanel";
 import cesiumDrawInit from "@/api/cesiumApi/cesiumDrawInit";
 import {markPhotoList, matchMark, refenceMarkPhotoList} from "@/api/cesiumApi/tool"
+import {getPloy} from "@/api/system/plot"
 
 export default {
   components: {
@@ -175,7 +176,9 @@ export default {
       modelStatusContent: "隐藏当前模型",
       modelName:"",
       //-------------ws---------------------
-      websock:null
+      websock:null,
+      //---------------数据库---------------------
+      plotData:null
     };
   },
   mounted() {
@@ -240,11 +243,157 @@ export default {
     this.watchTerrainProviderChanged()
     this.createMarkPhoteList()
     cesiumDrawInit.init(window.viewer,this.websock);
+    this.initPlot()
   },
   destroyed() {
     this.websock.close()
   },
   methods: {
+    initPlot(){
+      getPloy({id:"ckwtest123"}).then(res=>{
+        this.plotData = res
+        console.log(this.plotData,"请求data")
+        let data = res
+        let pointArr = data.filter( e => e.drawtype === 'point')
+        let polylineArr = data.filter( e => e.drawtype === 'polyline')
+        let polygonArr = data.filter( e => e.drawtype === 'polygon')
+        console.log(pointArr,polylineArr,polygonArr,"分类data")
+        //画点
+        this.drawPoint(pointArr)
+        this.drawPolyline(polylineArr)
+        this.drawPolygon(polygonArr)
+      })
+    },
+    drawPoint(pointArr){
+      pointArr.forEach(element=>{
+        window.viewer.entities.add({
+          id:element.drawid,
+          position: Cesium.Cartesian3.fromDegrees(Number(element.longitude) , Number(element.latitude), Number(element.height)),
+          billboard: {
+            image: element.img,
+            // width: 200,//图片宽度,单位px
+            // height: 200,//图片高度，单位px // 会影响point大小，离谱
+            eyeOffset: new Cesium.Cartesian3(0, 0, 0),//与坐标位置的偏移距离
+            color: Cesium.Color.WHITE.withAlpha(1),//颜色
+            scale: 0.8,//缩放比例
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+            depthTest: false,//禁止深度测试但是没有下面那句有用
+            disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+          },
+          properties:{
+            type:element.pointtype,
+            time:element.timestamp,
+            name:element.pointname,
+            lon:element.longitude,
+            lat:element.latitude,
+            describe:element.pointdescribe,
+            id:element.drawid
+          }
+        })
+      })
+    },
+    drawPolyline(polylineArr){
+      // 根据线的drawid记录有多少条线
+      let onlyDrawId = []
+      polylineArr.forEach(element=>{
+        if(!onlyDrawId.includes(element.drawid)){
+          onlyDrawId.push(element.drawid)
+        }
+      })
+      onlyDrawId.forEach(onlyDrawIdItem=>{
+        let line = []
+        polylineArr.forEach(polylineElement=>{
+          if(polylineElement.drawid === onlyDrawIdItem){
+            line.push(polylineElement)
+          }
+        })
+        let pointLinePoints = []
+        for(let i=0;i<line.length;i++){
+          let p = window.viewer.entities.add({
+            position: new Cesium.Cartesian3(line[i].longitude, line[i].latitude, line[i].height),
+            id: line[i].drawid + 'point' + (i+1),
+            point: {
+              pixelSize: 10,
+              color: Cesium.Color.RED,
+              outlineWidth: 2,
+              outlineColor: Cesium.Color.DARKRED,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+              depthTest: false,//禁止深度测试但是没有下面那句有用
+              disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+            },
+          });
+          pointLinePoints.push(p)
+        }
+        let positionsArr = []
+        line.forEach(e=>{
+          positionsArr.push(new Cesium.Cartesian3(e.longitude, e.latitude, e.height))
+        })
+        window.viewer.entities.add({
+          id: onlyDrawIdItem,
+          polyline:{
+            positions: positionsArr,
+            width: 5,
+            material: Cesium.Color.YELLOW,
+            depthFailMaterial: Cesium.Color.YELLOW,
+            clampToGround: true,
+          },
+          properties: {
+            pointPosition: pointLinePoints,
+          }
+        })
+      }
+      )
+    },
+    drawPolygon(polygonArr){
+      // 根据线的drawid记录有多少个面
+      let onlyDrawId = []
+      polygonArr.forEach(element=>{
+        if(!onlyDrawId.includes(element.drawid)){
+          onlyDrawId.push(element.drawid)
+        }
+      })
+      onlyDrawId.forEach(onlyDrawIdItem=>{
+        let polygon = []
+        polygonArr.forEach(polygonElement=>{
+          if(polygonElement.drawid === onlyDrawIdItem){
+            polygon.push(polygonElement)
+          }
+        })
+        let pointLinePoints = []
+        for(let i=0;i<polygon.length;i++){
+          let p = window.viewer.entities.add({
+            position: new Cesium.Cartesian3(polygon[i].longitude, polygon[i].latitude, polygon[i].height),
+            id: polygon[i].drawid + 'Point' + (i+1),
+            point: {
+              color: Cesium.Color.SKYBLUE,
+              pixelSize: 10,
+              outlineColor: Cesium.Color.YELLOW,
+              outlineWidth: 3,
+              disableDepthTestDistance: Number.POSITIVE_INFINITY,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+          });
+          pointLinePoints.push(p)
+        }
+        let positionsArr = []
+        polygon.forEach(e=>{
+          positionsArr.push(new Cesium.Cartesian3(e.longitude, e.latitude, e.height))
+        })
+        window.viewer.entities.add({
+          id: onlyDrawIdItem,
+          polygon: {
+            hierarchy: positionsArr,
+            material:new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
+            clampToGround: true,
+          },
+          properties: {
+            linePoint: positionsArr,
+            pointPosition: positionsArr
+          }
+        })
+        console.log(window.viewer.entities)
+      })
+    },
     arrow(tp){
       console.log(tp)
       cesiumDrawInit.arrowD(tp)
@@ -252,7 +401,7 @@ export default {
     //------------------------------------------
     initWebSocket(){
       const currentTime = Date.now();
-      const wsuri = "ws://localhost:8080/ws/"+currentTime;
+      const wsuri = "ws://192.168.2.6:8080/ws/"+currentTime;
       if(typeof(WebSocket) == "undefined") {
         console.log("您的浏览器不支持WebSocket");
       }else{
@@ -298,10 +447,35 @@ export default {
           }
           else if(markType === "polygon"){
             let polygon = window.viewer.entities.getById(id)
-            let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
-            polygonPosition.linePoint.forEach((item, index) => {
-              window.viewer.entities.remove(item)
+            // let polygonPosition = polygon.properties.pointPosition.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+            // polygonPosition.linePoint.forEach((item, index) => {
+            //   window.viewer.entities.remove(item)
+            // })
+            // window.viewer.entities.remove(polygon)
+            let polygonPosition = polygon.properties.pointPosition.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
+            let posArr = [] // 转换成经纬度数组
+            polygonPosition.forEach((item, index) => {
+              let cartographicPosition = Cesium.Cartographic.fromCartesian(item)
+              posArr[index] = [Cesium.Math.toDegrees(cartographicPosition.longitude), Cesium.Math.toDegrees(cartographicPosition.latitude)]
             })
+            let deletePointArr = []
+            let points = window.viewer.entities.values // 获取所有实体
+            points.forEach((item, i) => {
+              if (item._point !== undefined) { // 判断是否是点
+                let posCartographicPosition = Cesium.Cartographic.fromCartesian(item.position.getValue(Cesium.JulianDate.now()))//使用getValue时需要加上时间
+                let pos = { // 从平面坐标系坐标转经纬度坐标
+                  lon: Cesium.Math.toDegrees(posCartographicPosition.longitude),
+                  lat: Cesium.Math.toDegrees(posCartographicPosition.latitude)
+                }
+                if (cesiumDrawInit.isPointInPolygon(posArr, pos)) { // 添加面的时候为了更显眼顶点处是添加的point，所以删除面的时候要同时删除点，就可以用写好的判断点是否在面里的方法
+                  deletePointArr.push(item)
+                }
+              }
+            })
+            // 不可以直接在上个循环上删除，因为points相当于是所有实体的指针，删除的时候实体数量就变化了，所以需要先存到deletePointArr，再删除
+            for (let i = 0; i < deletePointArr.length; i++) {
+              window.viewer.entities.remove(deletePointArr[i])
+            }
             window.viewer.entities.remove(polygon)
           }
         }
@@ -392,7 +566,6 @@ export default {
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,},
           });
           pointLinePoints.push(p)
-          console.log(pointLinePoints,999)
         }
         window.viewer.entities.add({
           id: data.id + "polygon",
@@ -402,7 +575,8 @@ export default {
             clampToGround: true,
           },
           properties: {
-            linePoint: pointLinePoints //存顶点的数组
+            pointPosition: data.positions,
+            linePoint: pointLinePoints,
           }
         })
       }
@@ -652,6 +826,7 @@ export default {
         operate:"delete",
         id: polygon.id
       }))
+      console.log(polygon,polygon.properties.pointPosition)
       let polygonPosition = polygon.properties.pointPosition.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
       let posArr = [] // 转换成经纬度数组
       polygonPosition.forEach((item, index) => {

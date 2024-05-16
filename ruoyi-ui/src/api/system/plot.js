@@ -1,9 +1,9 @@
 import request from '@/utils/request'
 import { parseStrEmpty } from "@/utils/ruoyi";
 
-export function getWs(query) {
+export function getPloy(query) {
   return request({
-    url: '/system/ws/ws',
+    url: '/system/ploy/geteqploy',
     method: 'get',
     params: query
   })

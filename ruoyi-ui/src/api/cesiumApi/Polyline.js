@@ -59,6 +59,7 @@ export default class Polyline {
       let position = viewer.scene.globe.pick(ray, window.viewer.scene)
       that.index++
       that.positions.push(position);
+      console.log(position)
       let p = that.createPoint(position)
       that.pointLinePoint.push(p)
       if (that.positions.length === 1) {
@@ -107,7 +108,7 @@ export default class Polyline {
   //绘制结束 触发结束事件
   drawEnd() {
     let that = this
-    console.log(window.viewer.entities)
+    console.log(that.positions)
     this.ws.send(JSON.stringify({
       type:"polyline",
       operate:"add",
