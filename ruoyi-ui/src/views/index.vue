@@ -1,15 +1,18 @@
 <template>
   <div class="home">
-    <CesiumScene />
+<!--    <CesiumScene />-->
+    <home />
   </div>
 </template>
 
 <script>
-import CesiumScene from '@/components/Cesium/CesiumScene'
+// import CesiumScene from '@/components/Cesium/CesiumScene'
+import home from '@/components/Cesium/home'
 export default {
   name: "Index",
   components: {
-    CesiumScene
+    // CesiumScene
+    home
   },
   data() {
     return {

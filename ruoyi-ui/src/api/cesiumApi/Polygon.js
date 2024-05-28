@@ -2,7 +2,7 @@ import * as Cesium from 'cesium'
 import {Entity, PolygonHierarchy} from "cesium";
 
 export default class Polygon {
-  constructor(viewer,ws) {
+  constructor(viewer, ws) {
     this.viewer = viewer;
     this.handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
     this.polygonEntity = null
@@ -18,7 +18,7 @@ export default class Polygon {
     // 创建Date对象
     let currentDate = new Date();
     // 获取当前时间的时间戳作为ID
-    this.initId = currentDate.getTime();
+    this.initId = currentDate.getTime() + "polygon";
     this.tempPositions = [];
     this.leftClickEvent()
     this.rightClickEvent()
@@ -37,6 +37,7 @@ export default class Polygon {
       //调用绘制点的接口
       let point = that.drawPoint(position)
       that.polygonPointEntity.push(point)
+      console.log(that.polygonPointEntity)
       that.lastItem++
 
       if (tempLength > 2) {
@@ -62,11 +63,10 @@ export default class Polygon {
           that.handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         }
       }
-      console.log(that.viewer.entities)
       that.ws.send(JSON.stringify({
-        type:"polygon",
-        operate:"add",
-        data:{
+        type: "polygon",
+        operate: "add",
+        data: {
           id: that.initId,
           positions: that.positions
         }
@@ -102,7 +102,6 @@ export default class Polygon {
       that.positions = []
       that.polygonEntity = null
       that.lastItem = 0
-      console.log(window.viewer.entities,'polygon.js')
 
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
   }
@@ -119,8 +118,7 @@ export default class Polygon {
   drawPoint(position) {
     let that = this
     return this.viewer.entities.add({
-      name: "点几何对象",
-      id: that.initId + "polygonPoint" + that.lastItem,
+      id: that.initId + "Point" + that.lastItem,
       position: position,
       point: {
         color: Cesium.Color.SKYBLUE,
@@ -133,22 +131,21 @@ export default class Polygon {
     })
   }
 
-  drawPolygon(positions, config_) {
+  drawPolygon() {
     let that = this
-    let config = config_ ? config_ : {}
     if (this.polygonEntity) {
       this.viewer.entities.remove(that.polygonEntity);
     }
     // let cerPosition = new Cesium.CallbackProperty(e => {return that.tempPositions}, false)
     // console.log(cerPosition)
     this.polygonEntity = new Entity({
-      id: that.initId + "polygon",
+      id: that.initId ,
       polygon: {
         hierarchy: that.positions,
         // hierarchy: new Cesium.PolygonHierarchy( //that.positions,
         //   cerPosition
         // ),
-        material: config.color ? new Cesium.Color.fromCssColorString(config.color).withAlpha(.2) : new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
+        material: new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
         clampToGround: true,
       },
       properties: {
@@ -281,5 +278,81 @@ export default class Polygon {
     let lon = (lat - b) / k
     // console.log(lon)
     return lon
+  }
+
+  //删除面
+  deletePolygon(polygon) {
+    this.ws.send(JSON.stringify({
+      type:"polygon",
+      operate:"delete",
+      id: polygon.id
+    }))
+    let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
+    polygonPosition.linePoint.forEach((item, index) => {
+      window.viewer.entities.remove(item)
+    })
+    window.viewer.entities.remove(polygon)
+  }
+
+  // 根据数据库中数据绘制面
+  getDrawPolygon(polygonArr) {
+    // 1-1 根据线的drawid记录有多少个面
+    let onlyDrawId = this.distinguishPolygonId(polygonArr)
+    // 1-2根据drawid来画面
+    onlyDrawId.forEach(onlyDrawIdItem => {
+      // 1-3 把数据库同一drawid的点数据放入此数组
+      let polygon = []
+      polygonArr.forEach(polygonElement => {
+        if (polygonElement.drawid === onlyDrawIdItem) {
+          polygon.push(polygonElement)
+        }
+      })
+      // 1-4 pointLinePoints用来存构成面的点实体
+      let pointLinePoints = []
+      for (let i = 0; i < polygon.length; i++) {
+        let p = window.viewer.entities.add({
+          position: new Cesium.Cartesian3(polygon[i].longitude, polygon[i].latitude, polygon[i].height),
+          id: polygon[i].drawid + 'Point' + (i + 1),
+          point: {
+            color: Cesium.Color.SKYBLUE,
+            pixelSize: 10,
+            outlineColor: Cesium.Color.YELLOW,
+            outlineWidth: 3,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          },
+        });
+        pointLinePoints.push(p)
+      }
+      // 1-5 把数据库同一drawid的点数据转化成Cartesian3类型的数组
+      let positionsArr = []
+      polygon.forEach(e => {
+        positionsArr.push(new Cesium.Cartesian3(e.longitude, e.latitude, e.height))
+      })
+      // 1-6 画面
+      window.viewer.entities.add({
+        id: onlyDrawIdItem,
+        polygon: {
+          hierarchy: positionsArr,
+          material: new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
+          clampToGround: true,
+        },
+        properties: {
+          pointPosition: positionsArr,
+          linePoint: positionsArr,
+        }
+      })
+    })
+  }
+
+  // 在重复的drwaid中获取所有面的唯一drwaid
+  distinguishPolygonId(polygonArr) {
+    let polygonIdArr = []
+    polygonArr.forEach(element => {
+      if (!polygonIdArr.includes(element.drawid)) {
+        polygonIdArr.push(element.drawid)
+      }
+    })
+    return polygonIdArr
   }
 }

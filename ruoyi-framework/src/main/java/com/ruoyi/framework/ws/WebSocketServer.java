@@ -147,7 +147,7 @@ public class WebSocketServer {
                         spPolyline.setEqid(eqid);
                         spPolyline.setTimestamp(timestamp);
                         spPolyline.setDrawtype(drawtype);
-                        spPolyline.setDrawid(drawid + drawType);
+                        spPolyline.setDrawid(drawid);
                         spPolyline.setPointtype(pointType);
                         spPolyline.setPointdescribe(pointdescribe);
                         spPolyline.setPointname(pointname);
@@ -167,7 +167,7 @@ public class WebSocketServer {
                         spPolygon.setEqid(eqid);
                         spPolygon.setTimestamp(timestamp);
                         spPolygon.setDrawtype(drawtype);
-                        spPolygon.setDrawid(drawid + drawType);
+                        spPolygon.setDrawid(drawid);
                         spPolygon.setPointtype(pointType);
                         spPolygon.setPointdescribe(pointdescribe);
                         spPolygon.setPointname(pointname);

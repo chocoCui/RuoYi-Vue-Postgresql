@@ -29,7 +29,7 @@
         </tr>
       </tbody>
     </table>
-    <el-button  @click="deleteMark" type="danger" icon="el-icon-delete" circle></el-button>
+    <el-button  @click="deletePoint" type="danger" icon="el-icon-delete" circle></el-button>
   </div>
 </template>
 <script>
@@ -71,9 +71,8 @@ export default {
   },
   methods:{
     // 删除标注
-    deleteMark(){
-      this.$emit('delete')
-      this.$emit('wsSend',JSON.stringify({type:"point",operate:"delete",id:window.selectedEntity.id}))
+    deletePoint(){
+      this.$emit('wsSendPoint',JSON.stringify({type:"point",operate:"delete",id:window.selectedEntity.id}))
     }
   }
 };

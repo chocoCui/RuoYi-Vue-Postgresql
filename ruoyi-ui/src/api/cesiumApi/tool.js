@@ -79,7 +79,7 @@ function markPhotoList(){
     })
     return typeList
 }
-// 图片名要(英文名,中文名)中间时英文逗号
+// 图片名要(英文名,中文名)中间是英文逗号
 function refenceMarkPhotoList(){
     let refencObj = {}
     const requireContext = require.context('@/assets/noteImg',true,/\.(png|jpe?g|svg|gif)$/);

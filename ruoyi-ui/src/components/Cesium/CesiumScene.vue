@@ -252,12 +252,10 @@ export default {
     initPlot(){
       getPloy({id:"ckwtest123"}).then(res=>{
         this.plotData = res
-        console.log(this.plotData,"请求data")
         let data = res
         let pointArr = data.filter( e => e.drawtype === 'point')
         let polylineArr = data.filter( e => e.drawtype === 'polyline')
         let polygonArr = data.filter( e => e.drawtype === 'polygon')
-        console.log(pointArr,polylineArr,polygonArr,"分类data")
         //画点
         this.drawPoint(pointArr)
         this.drawPolyline(polylineArr)

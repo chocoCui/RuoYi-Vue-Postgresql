@@ -2,12 +2,13 @@
 const path = require('path')
 
 function resolve(dir) {
-  return path.join(__dirname, dir)
+  // return path.join(__dirname, dir)
+  return path.resolve(__dirname, dir)
 }
 
 const CompressionPlugin = require('compression-webpack-plugin')
 
-const name = process.env.VUE_APP_TITLE || '雅安市项目' // 网页标题
+const name = process.env.VUE_APP_TITLE || '地震应急信息服务技术支撑平台' // 网页标题
 
 const port = process.env.port || process.env.npm_config_port || 80 // 端口
 
@@ -88,7 +89,7 @@ module.exports = {
       }]),
       new webpack.DefinePlugin({
         // Define relative base path in cesium for loading assets
-        CESIUM_BASE_URL: JSON.stringify('./cesium'),
+        CESIUM_BASE_URL: JSON.stringify('/cesium'),
       })
     ],
     module: {

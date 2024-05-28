@@ -1,7 +1,7 @@
 import * as Cesium from 'cesium'
 
 export default class Polyline {
-  constructor(viewer,ws) {
+  constructor(viewer, ws) {
     this.viewer = viewer;
     this.index = 0
     this.handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
@@ -14,6 +14,7 @@ export default class Polyline {
     this.initId = null
     this.ws = ws
   }
+
   //激活
   activate() {
     this.status = 1
@@ -24,20 +25,23 @@ export default class Polyline {
     // 创建Date对象
     let currentDate = new Date();
     // 获取当前时间的时间戳作为ID
-    this.initId = currentDate.getTime();
+    this.initId = currentDate.getTime() + "polyline";
     this.registerEvents(); //注册鼠标事件
   }
+
   //禁用
   deactivate() {
     this.unRegisterEvents();
     this.drawEntity = undefined;
   }
+
   //解除鼠标事件
   unRegisterEvents() {
     this.handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
     this.handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     this.handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
   }
+
   //清空绘制
   clear() {
     if (this.drawEntity) {
@@ -45,12 +49,14 @@ export default class Polyline {
       this.drawEntity = undefined;
     }
   }
+
   // 注册事件
   registerEvents() {
     this.leftClickEvent();
     this.rightClickEvent();
     this.mouseMoveEvent();
   }
+
   leftClickEvent() {
     let that = this
     this.handler.setInputAction(e => {
@@ -59,7 +65,6 @@ export default class Polyline {
       let position = viewer.scene.globe.pick(ray, window.viewer.scene)
       that.index++
       that.positions.push(position);
-      console.log(position)
       let p = that.createPoint(position)
       that.pointLinePoint.push(p)
       if (that.positions.length === 1) {
@@ -108,13 +113,13 @@ export default class Polyline {
   //绘制结束 触发结束事件
   drawEnd() {
     let that = this
-    console.log(that.positions)
+    console.log(that.initId)
     this.ws.send(JSON.stringify({
-      type:"polyline",
-      operate:"add",
-      data:{
-        id:that.initId,
-        positions:that.positions
+      type: "polyline",
+      operate: "add",
+      data: {
+        id: that.initId,
+        positions: that.positions
       }
     }))
     this.status = 0
@@ -143,10 +148,11 @@ export default class Polyline {
       // show: true
     });
   }
+
   generatePolyline() {
     let that = this
     this.drawEntity = this.viewer.entities.add({
-      id: this.initId + 'polyline',
+      id: this.initId,
       polyline: {
         positions: new Cesium.CallbackProperty(e => {
           return this.tempPositions;
@@ -162,7 +168,7 @@ export default class Polyline {
     })
   }
 
-  /* 空间两点距离计算函数 */
+  // 空间两点距离计算函数
   getSpaceDistance(positions) {
     let lengthAll = 0;
     for (let i = 0; i < positions.length - 1; i++) {
@@ -182,4 +188,82 @@ export default class Polyline {
     return lengthAll
   }
 
+  // 删除线图层
+  deletePolyline(polyline) {
+    this.ws.send(JSON.stringify({
+      type:"polyline",
+      operate:"delete",
+      id: polyline.id
+    }))
+    let polylinePosition = polyline.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+    polylinePosition.pointPosition.forEach((item, index) => {
+      window.viewer.entities.remove(item)
+    })
+    window.viewer.entities.remove(polyline)
+  }
+
+  // 根据数据库中数据绘制线
+  getDrawPolyline(polylineArr) {
+    // 1-1 根据线的drawid记录有多少条线
+    let onlyDrawId = this.distinguishPolylineId(polylineArr)
+    // 1-2根据drawid来画线
+    onlyDrawId.forEach(onlyDrawIdItem => {
+        // 1-3 把数据库同一drawid的点数据放入此数组
+        let line = []
+        polylineArr.forEach(polylineElement => {
+          if (polylineElement.drawid === onlyDrawIdItem) {
+            line.push(polylineElement)
+          }
+        })
+        // 1-4 pointLinePoints用来存构成线的点实体
+        let pointLinePoints = []
+        for (let i = 0; i < line.length; i++) {
+          let p = window.viewer.entities.add({
+            position: new Cesium.Cartesian3(line[i].longitude, line[i].latitude, line[i].height),
+            id: line[i].drawid + 'point' + (i + 1),
+            point: {
+              pixelSize: 10,
+              color: Cesium.Color.RED,
+              outlineWidth: 2,
+              outlineColor: Cesium.Color.DARKRED,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
+              depthTest: false,//禁止深度测试但是没有下面那句有用
+              disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
+            },
+          });
+          pointLinePoints.push(p)
+        }
+        // 1-5 把数据库同一drawid的点数据转化成Cartesian3类型的数组
+        let positionsArr = []
+        line.forEach(e => {
+          positionsArr.push(new Cesium.Cartesian3(e.longitude, e.latitude, e.height))
+        })
+        // 1-6 画线
+        window.viewer.entities.add({
+          id: onlyDrawIdItem,
+          polyline: {
+            positions: positionsArr,
+            width: 5,
+            material: Cesium.Color.YELLOW,
+            depthFailMaterial: Cesium.Color.YELLOW,
+            clampToGround: true,
+          },
+          properties: {
+            pointPosition: pointLinePoints,
+          }
+        })
+      }
+    )
+  }
+
+  // 在重复的drwaid中获取所有线的唯一drwaid
+  distinguishPolylineId(polylineArr) {
+    let PolylineIdArr = []
+    polylineArr.forEach(element => {
+      if (!PolylineIdArr.includes(element.drawid)) {
+        PolylineIdArr.push(element.drawid)
+      }
+    })
+    return PolylineIdArr
+  }
 }
