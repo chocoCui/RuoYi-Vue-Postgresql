@@ -25,6 +25,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <delete id="deletePlot">
         delete from situation_plot where drawid=#{id}
     </delete>
+
+    <insert id="addPlotIcon">
+        insert into plot_icon_management (id,name,describe,type,plottype,img)
+        values (#{id}, #{name}, #{describe}, #{type}, #{plotType}, #{img})
+    </insert>
+
+    <delete id="deletePlotIcon">
+        delete from plot_icon_management where id=#{id}
+    </delete>
+
+    <update id="updataPlotIcon" parameterType="com.ruoyi.system.domain.PlotIconManagement">
+        update plot_icon_management
+        set name = #{name}, describe = #{describe}, type = #{type}, plottype = #{plotType}, img = #{img}, id = #{id}
+        where id = #{id}
+    </update>
+
+    <select id="selectPlotIcon" resultType="com.ruoyi.system.domain.PlotIconManagement">
+        select * from plot_icon_management
+    </select>
 </mapper>
 
 

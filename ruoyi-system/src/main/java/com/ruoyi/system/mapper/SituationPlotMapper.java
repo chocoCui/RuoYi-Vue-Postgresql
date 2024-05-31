@@ -1,5 +1,6 @@
 package com.ruoyi.system.mapper;
 
+import com.ruoyi.system.domain.PlotIconManagement;
 import com.ruoyi.system.domain.SituationPlot;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -16,4 +17,14 @@ public interface SituationPlotMapper {
     int addPlotMore(List<SituationPlot> spM);
 
     int deletePlot(@Param("id") String id);
+
+    int addPlotIcon(PlotIconManagement pim);
+
+    int deletePlotIcon(@Param("id") String id);
+
+    int updataPlotIcon(PlotIconManagement pim);
+
+    List<PlotIconManagement> selectPlotIcon();
+
+
 }

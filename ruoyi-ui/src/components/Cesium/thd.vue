@@ -6,6 +6,11 @@
           地震列表
         </div>
       </button>
+      <button @click="LRDLChange">
+        <div>
+          公路网图
+        </div>
+      </button>
       <transition name="eqListfade">
         <eqListTable v-if="eqListShow"/>
       </transition>
@@ -48,8 +53,10 @@ export default {
       showPolyline: false,// 线的删除按钮
       //-------------ws---------------------
       websock: null,
-      //--------------------------------------
-      eqListShow: false
+      //-----------------地震列表---------------------
+      eqListShow: false,
+      //-----------------图层---------------------
+      LRDLStatus: false, // 路网
     };
   },
   mounted() {
@@ -60,6 +67,7 @@ export default {
     this.watchTerrainProviderChanged()
     cesiumPlot.init(window.viewer, this.websock, this.$store)
     this.initPlot("ckwtest123")
+    //-----------------------------------------
   },
   destroyed() {
     this.websock.close()
@@ -253,7 +261,6 @@ export default {
         }
       }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
     },
-    //--------------------弹窗----------------------
     // 更新弹窗的位置
     updatePopupPosition() {
       // 笛卡尔3转笛卡尔2（屏幕坐标）
@@ -264,6 +271,36 @@ export default {
           y: canvasPosition.y //- 60 // 假设弹窗应该在图标上方 50px 的位置
         };
       }
+    },
+    // ---------------------图层切换------------------------
+
+    /*
+    * 对于添加WMS型的数据用WebMapServiceImageryProvider接口
+    *
+    * */
+
+    // 公路网
+    LRDLChange() {
+      if (this.LRDLStatus) {
+        this.LRDLStatus = !this.LRDLStatus
+        window.viewer.scene.imageryLayers.remove(window.LRDL)
+      } else {
+        this.LRDLStatus = !this.LRDLStatus
+        this.addWmsImageryLRDL()
+      }
+    },
+    addWmsImageryLRDL() {
+      let LRDL = new Cesium.WebMapServiceImageryProvider({
+        url: "http://gisserver.tianditu.gov.cn/TDTService/wfs",
+        layers: "LRDL",
+        parameters: {
+          service: "WMS",
+          format: "image/png",
+          transparent: true
+        }
+      })
+      // addImageryProvider是创建了一个图层，需要用viewer.scene.imageryLayers.remove移除
+      window.LRDL = window.viewer.imageryLayers.addImageryProvider(LRDL);
     },
   }
 }
