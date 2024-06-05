@@ -1,28 +1,28 @@
-<template>
+<template xmlns="http://www.w3.org/1999/html">
   <div id="cesiumContainer">
     <el-form class="button-container">
       <div class="modelAdj">模型选择</div>
-      <el-button class="el-button--primary" @click="selectModel(1)">0.4平方公里模型</el-button>
-      <el-button class="el-button--primary" @click="selectModel(2)">7.37平方公里模型</el-button>
+      <el-button class="el-button--primary" size="small" @click="selectModel(1)">0.4平方公里模型</el-button>
+      <el-button class="el-button--primary" size="small" @click="selectModel(2)">7.37平方公里模型</el-button>
       <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel(3)">3</el-button>-->
       <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/shang')">绵阳上-->
       <!--      </el-button>-->
       <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/xia')">绵阳下</el-button>-->
       <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('tianquan_37.6GB_4km2_3dtiles')">天全</el-button>-->
       <!--      <el-button class="el-button&#45;&#45;primary" @click="selectGltfModel()">gltf</el-button>-->
-      <el-button class="el-button--primary" @click="home">雅安</el-button>
+      <el-button class="el-button--primary" size="small" @click="home">雅安</el-button>
 
     </el-form>
     <el-form class="tool-container">
       <el-row>
         <div class="modelAdj">模型调整</div>
-        <el-button class="el-button--primary" @click="find">找到模型</el-button>
-        <el-button class="el-button--primary" @click="showArrow">{{ showArrowText }}</el-button>
+        <el-button class="el-button--primary" size="small" @click="find">找到模型</el-button>
+        <el-button class="el-button--primary" size="small" @click="showArrow">{{ showArrowText }}</el-button>
         <!--        <el-button class="el-button&#45;&#45;primary" @click="isTerrainLoaded">地形是否加载</el-button>-->
-        <el-button class="el-button--primary" @click="hide">{{ modelStatusContent }}</el-button>
+        <el-button class="el-button--primary" size="small" @click="hide">{{ modelStatusContent }}</el-button>
       </el-row>
       <el-row>
-        <br>
+        <!--        <br>-->
         <span style="color: white">调整高度</span>
         <el-slider
           v-model="tz"
@@ -35,8 +35,8 @@
         </el-slider>
       </el-row>
       <el-row>
-        <br>
-        <p style="color: white">绕Z轴旋转模型</p>
+        <!--        <br>-->
+        <span style="color: white">绕Z轴旋转模型</span>
         <el-slider
           v-model="rz"
           show-input
@@ -48,7 +48,7 @@
         </el-slider>
       </el-row>
       <el-row>
-        <br>
+        <!--        <br>-->
         <span style="color: white">调整模型透明度</span>
         <el-slider
           v-model="opacity"
@@ -75,41 +75,70 @@
     <el-form class="noteContainer">
       <div class="modelAdj">标绘工具</div>
       <el-row>
-        <el-button class="el-button--primary" @click="showMarkCollection=!showMarkCollection">添加标注信息</el-button>
-        <el-button class="el-button--primary" @click="drawP">量算面积</el-button>
-        <el-button class="el-button--primary" @click="drawN">量算距离</el-button>
-        <!--        <el-button class="el-button&#45;&#45;primary" @click="arrow('straightArrow')">ceshi</el-button>-->
-        <el-button type="danger" class="el-button--primary" @click="deletePolygon" v-if="this.showPolygon">删除面
-        </el-button>
-        <el-button type="danger" class="el-button--primary" @click="deletePolyline" v-if="this.showPolyline">删除线
-        </el-button>
-      </el-row>
-      <el-row>
-        <br>
-        <el-col :span="12">
-          <span style="color: white;">距离：</span>
-          <span style="color: white;" id="distanceLine">0</span>
-          <span style="color: white;"> 米</span>
+        <el-col :span="13">
+          <el-tree :data="plotTreeData" :props="defaultProps" @node-click="handleNodeClick"></el-tree>
         </el-col>
-        <el-col :span="12">
-          <span style="color: white;">面积：</span>
-          <span style="color: white;" id="area">0</span>
-          <span style="color: white;"> 平方米</span>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="24">
-          <span style="color: white;">区域内标绘个数：</span>
-          <span style="color: white;" id="ispointIcon">0 </span>
-          <span style="color: white;"> 个</span>
+        <el-col :span="11">
+          <span class="plotTreeItem" v-for="(item,index) in plotTreeClassification" v-if="item.plotType==='点图层'"  @click="openPointPop(item.name,item.img)">
+            <el-tooltip class="plottreetooltip" effect="dark" :content="item.name" placement="top-start">
+              <img :src="item.img" width="30px" height="30px">
+            </el-tooltip>
+          </span>
+          <span class="plotTreeItem" v-for="(item,index) in plotTreeClassification" v-if="item.plotType==='线图层'"  @click="drawPolyline(item)">
+            <el-tooltip class="plottreetooltip" effect="dark" :content="item.name" placement="top-start">
+              <img :src="item.img" width="30px" height="30px">
+            </el-tooltip>
+          </span>
+          <span class="plotTreeItem" v-for="(item,index) in plotTreeClassification" v-if="item.plotType==='面图层'"  @click="drawPolygon(item)">
+            <el-tooltip class="plottreetooltip" effect="dark" :content="item.name" placement="top-start">
+              <img :src="item.img" width="30px" height="30px">
+            </el-tooltip>
+          </span>
+          <span class="plotTreeItem"  v-if="plotTreeClassification.length===0">
+            <el-button class="el-button--primary" size="small" @click="drawP">量算面积</el-button>
+            <el-button class="el-button--primary" size="small" @click="drawN">量算距离</el-button>
+            <el-button style="margin: 10px;" type="danger" class="el-button--primary" size="small" @click="deletePolygon" v-if="this.showPolygon">删除面</el-button>
+            <el-button style="margin: 10px;" type="danger" class="el-button--primary" size="small" @click="deletePolyline" v-if="this.showPolyline">删除线</el-button>
+          </span>
         </el-col>
       </el-row>
+      <!--      <el-row>-->
+      <!--        <el-button class="el-button&#45;&#45;primary" @click="showMarkCollection=!showMarkCollection">添加标注信息</el-button>-->
+      <!--        <el-button class="el-button&#45;&#45;primary" @click="drawP">量算面积</el-button>-->
+      <!--        <el-button class="el-button&#45;&#45;primary" @click="drawN">量算距离</el-button>-->
+      <!--        &lt;!&ndash;        <el-button class="el-button&#45;&#45;primary" @click="arrow('straightArrow')">ceshi</el-button>&ndash;&gt;-->
+<!--              <el-button type="danger" class="el-button&#45;&#45;primary" @click="deletePolygon" v-if="this.showPolygon">删除面-->
+<!--              </el-button>-->
+<!--              <el-button type="danger" class="el-button&#45;&#45;primary" @click="deletePolyline" v-if="this.showPolyline">删除线-->
+<!--              </el-button>-->
+      <!--      </el-row>-->
+
+      <!--      <el-row>-->
+      <!--        <br>-->
+      <!--        <el-col :span="12">-->
+      <!--          <span style="color: white;">距离：</span>-->
+      <!--          <span style="color: white;" id="distanceLine">0</span>-->
+      <!--          <span style="color: white;"> 米</span>-->
+      <!--        </el-col>-->
+      <!--        <el-col :span="12">-->
+      <!--          <span style="color: white;">面积：</span>-->
+      <!--          <span style="color: white;" id="area">0</span>-->
+      <!--          <span style="color: white;"> 平方米</span>-->
+      <!--        </el-col>-->
+      <!--      </el-row>-->
+      <!--      <el-row>-->
+      <!--        <el-col :span="24">-->
+      <!--          <span style="color: white;">区域内标绘个数：</span>-->
+      <!--          <span style="color: white;" id="ispointIcon">0 </span>-->
+      <!--          <span style="color: white;"> 个</span>-->
+      <!--        </el-col>-->
+      <!--      </el-row>-->
     </el-form>
-    <div class="markCollection" v-show="showMarkCollection">
-      <span v-for="(item,index) in plotPicture" @click="openPointPop(item.name,item.img)">
-        <img :src="item.img" width="30px" height="30px"></img>
-      </span>
-    </div>
+<!--    <div class="markCollection" v-show="showMarkCollection">-->
+<!--      <span v-for="(item,index) in plotPicture" @click="openPointPop(item.name,item.img)">-->
+<!--        <img :src="item.img" width="30px" height="30px"></img>-->
+<!--      </span>-->
+<!--    </div>-->
     <addMarkCollectionDialog
       :addMarkDialogFormVisible.sync="addMarkDialogFormVisible"
       :pointInfo.sync="pointInfo"
@@ -144,6 +173,7 @@ import cesiumPlot from '@/api/cesiumApi/cesiumPlot'
 import addMarkCollectionDialog from "@/components/Cesium/addMarkCollectionDialog"
 import commonPanel from "@/components/Cesium/CommonPanel";
 import '@/api/cesiumApi/polylineMaterial'
+import log from "../../monitor/job/log";
 
 export default {
   components: {
@@ -178,9 +208,65 @@ export default {
       modelStatus: true,
       modelStatusContent: "隐藏当前模型",
       modelName: "",
-      plotPicture:[],
+      plotPicture: [],
       //-------------ws---------------------
       websock: null,
+      //-----------------------------------
+      plotTreeData: [
+        {
+          label: '次生灾害类',
+          children: [
+            {
+              label: 'I类（次生地质灾害）',
+            },
+            {
+              label: 'II类（建筑物破坏类）',
+            },
+            {
+              label: 'III类（交通设施破坏类）',
+            },
+            {
+              label: 'IV类（生命线工程破坏类）',
+            },
+            {
+              label: 'V类（水利工程破坏类）',
+            },
+            {
+              label: 'VI类（安全生产事故类）',
+            },
+          ]
+        },
+        {
+          label: '应急避难类',
+          children: [
+            {
+              label: 'I类（应急避难功能区类）',
+            },
+            {
+              label: 'II类（应急避难设施设备类）',
+            },
+            {
+              label: 'III类（应急避难场所类）',
+            },
+          ]
+        },
+        {
+          label: '量算工具',
+          // children: [
+          //   {
+          //     label: '距离量算',
+          //   },
+          //   {
+          //     label: '面积量算',
+          //   }
+          // ]
+        }
+      ],
+      defaultProps: {
+        label: 'label',
+        children: 'children',
+      },
+      plotTreeClassification:[]
     };
   },
   mounted() {
@@ -190,7 +276,7 @@ export default {
     // 生成实体点击事件的handler
     this.entitiesClickPonpHandler()
     this.watchTerrainProviderChanged()
-    this.createMarkPhoteList()
+    // this.createMarkPhoteList()
     cesiumPlot.init(window.viewer, this.websock, this.$store)
     this.initPlot("ckwtest123")
     this.getPlotPicture()
@@ -405,21 +491,37 @@ export default {
       }
     },
     // 关闭弹窗
-    closePlotPop(){
+    closePlotPop() {
       this.popupVisible = !this.popupVisible
     },
     // 获取标绘图片数据
     getPlotPicture() {
       let that = this
-      getPlotIcon().then(res=>{
-        console.log(res)
+      getPlotIcon().then(res => {
         that.plotPicture = res
+        // 设置plotTree初始样式
+        // that.plotTreeClassification = res.filter(item=>item.type==="I类（次生地质灾害）")
       })
     },
+    //--------------tree------------------------
+
+    handleNodeClick(data) {
+      if(data.$treeNodeId<12){
+        this.plotTreeClassification = []
+        let arr = this.plotPicture.filter(item=>{
+          return item.type === data.label
+        })
+        this.plotTreeClassification = [...arr]
+      }else {
+        this.plotTreeClassification = []
+        console.log(data.$treeNodeId,this.plotTreeClassification)
+      }
+    },
+
     //--------------点------------------------
 
     // 打开添加点标绘对话框
-    openPointPop(type,img) {
+    openPointPop(type, img) {
       if (this.openAddStatus) {
         // 1-1 更改添加点标注按钮状态
         this.openAddStatus = !this.openAddStatus
@@ -430,7 +532,7 @@ export default {
           duration: 0
         })
         // 1-3 生成点标注的handler
-        cesiumPlot.initPointHandler(type,img)
+        cesiumPlot.initPointHandler(type, img)
       }
     },
     // 画点
@@ -459,9 +561,13 @@ export default {
 
     //------------线------------
 
+    drawPolyline(info){
+      console.log(info,"线")
+      cesiumPlot.drawActivatePolyline(info.name,info.img)
+    },
     // 画线
     drawN() {
-      cesiumPlot.drawActivatePolyline()
+      cesiumPlot.drawActivatePolyline("量算")
     },
     // 删除线
     deletePolyline() {
@@ -472,6 +578,9 @@ export default {
 
     //------------面-------------
 
+    drawPolygon(info){
+      console.log(info,"面")
+    },
     // 画面
     drawP() {
       cesiumPlot.drawActivatePolygon()
@@ -900,6 +1009,27 @@ export default {
   display: none !important;
 }
 
+.el-tree {
+  background: rgb(38 36 36) !important;
+  color: #ffffff !important;
+}
+
+.el-tree-node__content:hover {
+  background-color: rgb(38 36 36) !important;
+}
+
+.el-tree-node:focus > .el-tree-node__content {
+  background-color: rgb(38 36 36) !important;
+}
+
+.plotTreeItem{
+  margin: 3px;
+}
+
+.plottreetooltip{
+  margin: 4px;
+}
+
 #cesiumContainer {
   height: 100%;
   width: 100%;
@@ -929,28 +1059,30 @@ export default {
 
 .noteContainer {
   position: absolute;
-  padding: 15px;
+  padding: 10px;
   border-radius: 5px;
-  top: 490px;
+  top: 368px;
   left: 10px;
-  z-index: 10; /* 更高的层级 */
+  width: 500px;
+  z-index: 10;
   background-color: rgba(40, 40, 40, 0.7);
 }
 
 .tool-container {
   position: absolute;
-  padding: 15px;
+  padding: 10px;
   border-radius: 5px;
   width: 500px;
-  top: 120px;
+  top: 90px;
   left: 10px;
   z-index: 10; /* 更高的层级 */
   background-color: rgba(40, 40, 40, 0.7);
 }
 
 .button-container {
+  width: 500px;
   position: absolute;
-  padding: 15px;
+  padding: 10px;
   border-radius: 5px;
   top: 10px;
   left: 10px;
@@ -972,6 +1104,6 @@ export default {
 
 .modelAdj {
   color: white;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 </style>
