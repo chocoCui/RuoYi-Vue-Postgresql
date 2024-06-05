@@ -20,8 +20,8 @@ let cesiumPlot= {
   },
 
   //------------------------------点---------------------------------
-  initPointHandler(pointType){
-    this.point.initPointHandlder(pointType,this.store)
+  initPointHandler(pointType,img){
+    this.point.initPointHandlder(pointType,img)
   },
 
   drawPoint(pointInfo){

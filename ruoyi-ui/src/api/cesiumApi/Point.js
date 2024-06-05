@@ -13,7 +13,7 @@ export default class Point {
     this.refenceTypeList = refenceMarkPhotoList()
   }
   // 画点的屏幕事件
-  initPointHandlder(pointType) {
+  initPointHandlder(pointType,img) {
     let viewer = this.viewer
     let that = this
     that.handler.setInputAction((event) => {
@@ -37,8 +37,8 @@ export default class Point {
       pointInfo.lat = lat.toFixed(6)
       pointInfo.lon = lon.toFixed(6)
       pointInfo.height = height
-      pointInfo.img = that.matchIcon(pointType)
-      pointInfo.type = that.refenceTypeList[pointType]
+      pointInfo.img = img//that.matchIcon(pointType)
+      pointInfo.type = pointType//that.refenceTypeList[pointType]
       pointInfo.id = Date.now()
       that.store.commit('SET_POINTINFO1', pointInfo)
       // 1-4 移除此handler
@@ -52,8 +52,8 @@ export default class Point {
       position: Cesium.Cartesian3.fromDegrees(Number(pointInfo.lon), Number(pointInfo.lat), Number(pointInfo.height)),
       billboard: {
         image: pointInfo.img,
-        // width: 200,//图片宽度,单位px
-        // height: 200,//图片高度，单位px // 会影响point大小，离谱
+        width: 50,//图片宽度,单位px
+        height: 50,//图片高度，单位px // 会影响point大小，离谱
         eyeOffset: new Cesium.Cartesian3(0, 0, 0),//与坐标位置的偏移距离
         color: Cesium.Color.WHITE.withAlpha(1),//颜色
         scale: 0.8,//缩放比例

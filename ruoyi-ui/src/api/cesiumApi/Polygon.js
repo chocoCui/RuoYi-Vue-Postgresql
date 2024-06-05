@@ -19,6 +19,8 @@ export default class Polygon {
     let currentDate = new Date();
     // 获取当前时间的时间戳作为ID
     this.initId = currentDate.getTime() + "polygon";
+    // 必须清空polygonPointEntity和tempPositions，否则会出现把上个面的点留在里面
+    this.polygonPointEntity = []
     this.tempPositions = [];
     this.leftClickEvent()
     this.rightClickEvent()
@@ -37,7 +39,6 @@ export default class Polygon {
       //调用绘制点的接口
       let point = that.drawPoint(position)
       that.polygonPointEntity.push(point)
-      console.log(that.polygonPointEntity)
       that.lastItem++
 
       if (tempLength > 2) {
@@ -136,15 +137,10 @@ export default class Polygon {
     if (this.polygonEntity) {
       this.viewer.entities.remove(that.polygonEntity);
     }
-    // let cerPosition = new Cesium.CallbackProperty(e => {return that.tempPositions}, false)
-    // console.log(cerPosition)
     this.polygonEntity = new Entity({
       id: that.initId ,
       polygon: {
         hierarchy: that.positions,
-        // hierarchy: new Cesium.PolygonHierarchy( //that.positions,
-        //   cerPosition
-        // ),
         material: new Cesium.Color.fromCssColorString("#FFD700").withAlpha(.2),
         clampToGround: true,
       },
@@ -288,6 +284,7 @@ export default class Polygon {
       id: polygon.id
     }))
     let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now()) //获取存在Polygon中的顶点坐标
+    console.log(polygonPosition,polygon.properties)
     polygonPosition.linePoint.forEach((item, index) => {
       window.viewer.entities.remove(item)
     })
@@ -339,7 +336,7 @@ export default class Polygon {
         },
         properties: {
           pointPosition: positionsArr,
-          linePoint: positionsArr,
+          linePoint: pointLinePoints,
         }
       })
     })

@@ -15,10 +15,8 @@ OpenStreetMapNominatimGeocoder.prototype.geocode = function (input) {
     const requestString = "https://nominatim.openstreetmap.org/search?" + query;
     return Cesium.Resource.fetchJson(requestString) //请求url获取json数据
         .then(function (results) {
-            console.log(results)
             let bboxDegrees;
             return results.map(function (resultObject) {
-                console.log(resultObject)
                 bboxDegrees = resultObject.boundingbox;
                 return {
                     displayName: resultObject.display_name,

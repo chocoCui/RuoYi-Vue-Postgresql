@@ -55,7 +55,6 @@ export class StraightArrow{
     this.clickStep = 0;
   }
   disableHandler(){
-    console.log(this.handler)
     if (this.handler) {
       // this.handler.destroy();
       this.handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);

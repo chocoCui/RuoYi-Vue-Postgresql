@@ -188,10 +188,10 @@ export default {
               value: 'II类（应急避难设施设备类）',
               label: 'II类（应急避难设施设备类）'
             },
-            // {
-            //   value: 'II类（应急避难设施设备类）',
-            //   label: 'II类（应急避难设施设备类）'
-            // }
+            {
+              value: 'III类（应急避难场所类）',
+              label: 'III类（应急避难场所类）'
+            }
           ]
         }
       ],
@@ -214,6 +214,7 @@ export default {
     // 在dialog对话框中上传img时触发
     async uploadOnChange(file, fileList) {
       let imgBase64 = await this.getBase64(file.raw)
+      console.log(imgBase64)
       this.dialogContent.img = imgBase64
     },
     // 图片转成base64
@@ -295,7 +296,6 @@ export default {
       if (end > this.total) {
         end = this.total
       }
-      console.log(this.currentPage, this.pageSize, start, end)
       for (; start < end; start++) {
         arr.push(this.getPicData[start])
       }

@@ -76,6 +76,7 @@ export default {
     commitAddNote() {
       let that = this
       this.$emit('drawPoint',this.form)
+      console.log(this.form)
       this.$emit('wsSendPoint', JSON.stringify({type: "point", operate: "add", data: that.form}))
       this.$emit('clearMarkDialogForm') // 调用父组件中clearMarkDialogForm对应的方法，重置标绘信息填写框里的信息
       Message({

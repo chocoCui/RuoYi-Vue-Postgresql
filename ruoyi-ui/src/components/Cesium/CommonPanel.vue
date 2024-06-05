@@ -72,6 +72,7 @@ export default {
   methods:{
     // 删除标注
     deletePoint(){
+      this.$emit('closePlotPop')
       this.$emit('wsSendPoint',JSON.stringify({type:"point",operate:"delete",id:window.selectedEntity.id}))
     }
   }

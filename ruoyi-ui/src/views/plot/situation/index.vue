@@ -1,5 +1,18 @@
 <template>
   <div id="cesiumContainer">
+    <el-form class="button-container">
+      <div class="modelAdj">模型选择</div>
+      <el-button class="el-button--primary" @click="selectModel(1)">0.4平方公里模型</el-button>
+      <el-button class="el-button--primary" @click="selectModel(2)">7.37平方公里模型</el-button>
+      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel(3)">3</el-button>-->
+      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/shang')">绵阳上-->
+      <!--      </el-button>-->
+      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/xia')">绵阳下</el-button>-->
+      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('tianquan_37.6GB_4km2_3dtiles')">天全</el-button>-->
+      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectGltfModel()">gltf</el-button>-->
+      <el-button class="el-button--primary" @click="home">雅安</el-button>
+
+    </el-form>
     <el-form class="tool-container">
       <el-row>
         <div class="modelAdj">模型调整</div>
@@ -59,20 +72,6 @@
         </el-col>
       </el-row>
     </el-form>
-    <el-form class="button-container">
-      <div class="modelAdj">模型选择</div>
-      <el-button class="el-button--primary" @click="selectModel(1)">0.4平方公里模型</el-button>
-      <el-button class="el-button--primary" @click="selectModel(2)">7.37平方公里模型</el-button>
-      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel(3)">3</el-button>-->
-      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/shang')">绵阳上-->
-      <!--      </el-button>-->
-      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('mianyang_235GB_8km2_3dtiles/xia')">绵阳下</el-button>-->
-      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectModel('tianquan_37.6GB_4km2_3dtiles')">天全</el-button>-->
-      <!--      <el-button class="el-button&#45;&#45;primary" @click="selectGltfModel()">gltf</el-button>-->
-      <el-button class="el-button--primary" @click="home">雅安</el-button>
-
-    </el-form>
-    <!---------简单标绘功能------>
     <el-form class="noteContainer">
       <div class="modelAdj">标绘工具</div>
       <el-row>
@@ -107,7 +106,7 @@
       </el-row>
     </el-form>
     <div class="markCollection" v-show="showMarkCollection">
-      <span v-for="(item,index) in typeList" @click="openPointPop(item.label)">
+      <span v-for="(item,index) in plotPicture" @click="openPointPop(item.name,item.img)">
         <img :src="item.img" width="30px" height="30px"></img>
       </span>
     </div>
@@ -123,8 +122,8 @@
       :position="popupPosition"
       :popupData="popupData"
       @wsSendPoint="wsSendPoint"
+      @closePlotPop="closePlotPop"
     />
-    <!-------------------------->
   </div>
 
 </template>
@@ -139,11 +138,12 @@ import {mapState} from "vuex";
 import {initCesium} from '@/api/cesiumApi/initCesium'
 import {markPhotoList, matchMark, refenceMarkPhotoList} from "@/api/cesiumApi/tool"
 import {getPloy} from "@/api/system/plot"
+import {getPlotIcon} from "@/api/system/plot"
 import {initWebSocket} from '@/api/WS.js'
 import cesiumPlot from '@/api/cesiumApi/cesiumPlot'
 import addMarkCollectionDialog from "@/components/Cesium/addMarkCollectionDialog"
 import commonPanel from "@/components/Cesium/CommonPanel";
-
+import '@/api/cesiumApi/polylineMaterial'
 
 export default {
   components: {
@@ -178,6 +178,7 @@ export default {
       modelStatus: true,
       modelStatusContent: "隐藏当前模型",
       modelName: "",
+      plotPicture:[],
       //-------------ws---------------------
       websock: null,
     };
@@ -192,6 +193,7 @@ export default {
     this.createMarkPhoteList()
     cesiumPlot.init(window.viewer, this.websock, this.$store)
     this.initPlot("ckwtest123")
+    this.getPlotPicture()
   },
   destroyed() {
     this.websock.close()
@@ -402,10 +404,22 @@ export default {
         };
       }
     },
+    // 关闭弹窗
+    closePlotPop(){
+      this.popupVisible = !this.popupVisible
+    },
+    // 获取标绘图片数据
+    getPlotPicture() {
+      let that = this
+      getPlotIcon().then(res=>{
+        console.log(res)
+        that.plotPicture = res
+      })
+    },
     //--------------点------------------------
 
     // 打开添加点标绘对话框
-    openPointPop(type) {
+    openPointPop(type,img) {
       if (this.openAddStatus) {
         // 1-1 更改添加点标注按钮状态
         this.openAddStatus = !this.openAddStatus
@@ -416,7 +430,7 @@ export default {
           duration: 0
         })
         // 1-3 生成点标注的handler
-        cesiumPlot.initPointHandler(type)
+        cesiumPlot.initPointHandler(type,img)
       }
     },
     // 画点
@@ -897,7 +911,7 @@ export default {
 .markCollection {
   position: absolute;
   padding: 10px;
-  top: 660px;
+  top: 630px;
   left: 10px;
   background-color: rgba(40, 40, 40, 0.7);
   z-index: 10; /* 更高的层级 */
