@@ -1,4 +1,4 @@
-<template xmlns="http://www.w3.org/1999/html">
+<template>
   <div id="cesiumContainer">
     <el-form class="button-container">
       <div class="modelAdj">模型选择</div>
@@ -528,7 +528,7 @@ export default {
     //--------------tree------------------------
 
     handleNodeClick(data) {
-      if(data.$treeNodeId<12){
+      if(data.label!=="量算工具"){
         this.plotTreeClassification = []
         let arr = this.plotPicture.filter(item=>{
           return item.type === data.label
@@ -536,7 +536,6 @@ export default {
         this.plotTreeClassification = [...arr]
       }else {
         this.plotTreeClassification = []
-        console.log(data.$treeNodeId,this.plotTreeClassification)
       }
     },
 
