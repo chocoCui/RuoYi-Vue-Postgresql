@@ -99,6 +99,28 @@
             <el-button class="el-button--primary" size="small" @click="drawN">量算距离</el-button>
             <el-button style="margin: 10px;" type="danger" class="el-button--primary" size="small" @click="deletePolygon" v-if="this.showPolygon">删除面</el-button>
             <el-button style="margin: 10px;" type="danger" class="el-button--primary" size="small" @click="deletePolyline" v-if="this.showPolyline">删除线</el-button>
+           <el-row>
+            <br>
+            <el-col :span="24">
+              <span style="color: white;">距离：</span>
+              <span style="color: white;" id="distanceLine">0</span>
+              <span style="color: white;"> 米</span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <span style="color: white;">面积：</span>
+              <span style="color: white;" id="area">0</span>
+              <span style="color: white;"> 平方米</span>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <span style="color: white;">区域内标绘个数：</span>
+              <span style="color: white;" id="ispointIcon">0 </span>
+              <span style="color: white;"> 个</span>
+            </el-col>
+          </el-row>
           </span>
         </el-col>
       </el-row>
@@ -113,26 +135,26 @@
 <!--              </el-button>-->
       <!--      </el-row>-->
 
-      <!--      <el-row>-->
-      <!--        <br>-->
-      <!--        <el-col :span="12">-->
-      <!--          <span style="color: white;">距离：</span>-->
-      <!--          <span style="color: white;" id="distanceLine">0</span>-->
-      <!--          <span style="color: white;"> 米</span>-->
-      <!--        </el-col>-->
-      <!--        <el-col :span="12">-->
-      <!--          <span style="color: white;">面积：</span>-->
-      <!--          <span style="color: white;" id="area">0</span>-->
-      <!--          <span style="color: white;"> 平方米</span>-->
-      <!--        </el-col>-->
-      <!--      </el-row>-->
-      <!--      <el-row>-->
-      <!--        <el-col :span="24">-->
-      <!--          <span style="color: white;">区域内标绘个数：</span>-->
-      <!--          <span style="color: white;" id="ispointIcon">0 </span>-->
-      <!--          <span style="color: white;"> 个</span>-->
-      <!--        </el-col>-->
-      <!--      </el-row>-->
+<!--            <el-row>-->
+<!--              <br>-->
+<!--              <el-col :span="12">-->
+<!--                <span style="color: white;">距离：</span>-->
+<!--                <span style="color: white;" id="distanceLine">0</span>-->
+<!--                <span style="color: white;"> 米</span>-->
+<!--              </el-col>-->
+<!--              <el-col :span="12">-->
+<!--                <span style="color: white;">面积：</span>-->
+<!--                <span style="color: white;" id="area">0</span>-->
+<!--                <span style="color: white;"> 平方米</span>-->
+<!--              </el-col>-->
+<!--            </el-row>-->
+<!--            <el-row>-->
+<!--              <el-col :span="24">-->
+<!--                <span style="color: white;">区域内标绘个数：</span>-->
+<!--                <span style="color: white;" id="ispointIcon">0 </span>-->
+<!--                <span style="color: white;"> 个</span>-->
+<!--              </el-col>-->
+<!--            </el-row>-->
     </el-form>
 <!--    <div class="markCollection" v-show="showMarkCollection">-->
 <!--      <span v-for="(item,index) in plotPicture" @click="openPointPop(item.name,item.img)">-->

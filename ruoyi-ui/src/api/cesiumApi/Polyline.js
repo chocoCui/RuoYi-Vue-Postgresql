@@ -76,7 +76,7 @@ export default class Polyline {
         that.generatePolyline();
       }
       let distance = that.getSpaceDistance(that.positions)
-      // document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
+      document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
