@@ -39,24 +39,37 @@ let cesiumPlot= {
 
   //------------------------------线---------------------------------
   drawActivatePolyline(type,img) {
+    let material = this.getMaterial(type,img)
+    this.polyline.activate(material,type,img)
+  },
+  deletePolyline(polyline){
+    this.polyline.deletePolyline(polyline)
+  },
+  getDrawPolyline(polylineArr){
+    this.polyline.getDrawPolyline(polylineArr,this.getMaterial)
+  },
+  // 返回画线时的状态，0:未激活 1:绘制，不加这个条件会触发this.showPolyline,导致删除线按钮一直出现
+  drawPolylineStatus() {
+    return this.polyline.status
+  },
+  // 选择当前线的material
+  getMaterial(type,img) {
     if(type==="量算"){
       let NORMALLINE = new Cesium.PolylineDashMaterialProperty({
         color: Cesium.Color.CYAN,
         dashPattern: parseInt("110000001111", 1),
       })
-      this.polyline.activate(NORMALLINE);
-      return 0
+      return NORMALLINE
     }
     if(type==="地裂缝"||type==="可用供水管网"||type==="不可用供水管网"){
       let PICTURELINE = new Cesium.ImageMaterialProperty({
         image: img,
         repeat: new Cesium.Cartesian2(3, 1),
       })
-      this.polyline.activate(PICTURELINE,"pic");
-      return 0
+      return PICTURELINE
     }
     if(type==="可通行公路"||type==="限制通行公路"||type==="不可通行公路"){
-      let color
+      let color = null
       if(type==="可通行公路"){
         color = Cesium.Color.fromBytes(158,202,181)
       }else if(type==="限制通行公路"){
@@ -68,8 +81,7 @@ let cesiumPlot= {
         color: color,
         dashPattern: parseInt("110000001111", 1),
       })
-      this.polyline.activate(NORMALLINE);
-      return 0
+      return NORMALLINE
     }
     if(type==="可通行铁路"||type==="不可通行铁路"){
       let gapColor
@@ -82,57 +94,6 @@ let cesiumPlot= {
         color: Cesium.Color.WHITE,
         gapColor: gapColor,
         dashLength: 100
-      })
-      this.polyline.activate(DASHLINE);
-      return 0
-    }
-    if(type==="可用输电线路"||type==="不可用输电线路"){
-      let NORMALLINE = new Cesium.PolylineDashMaterialProperty({
-        color: Cesium.Color.CYAN,
-        dashPattern: parseInt("110000001111", 1),
-      })
-      this.polyline.activate(NORMALLINE);
-      return 0
-    }
-    if(type==="可用输气管线"||type==="不可用输气管线"){
-      let NORMALLINE = new Cesium.PolylineDashMaterialProperty({
-        color: Cesium.Color.CYAN,
-        dashPattern: parseInt("110000001111", 1),
-      })
-      this.polyline.activate(NORMALLINE);
-      return 0
-    }
-  },
-  deletePolyline(polyline){
-    this.polyline.deletePolyline(polyline)
-  },
-  getDrawPolyline(polylineArr){
-    this.polyline.getDrawPolyline(polylineArr)
-  },
-  // 返回画线时的状态，0:未激活 1:绘制，不加这个条件会触发this.showPolyline,导致删除线按钮一直出现
-  drawPolylineStatus() {
-    return this.polyline.status
-  },
-  // 选择当前线的material
-  getMaterial(type,img) {
-    if(type==="地裂缝"||type==="可用供水管网"||type==="不可用供水管网"){
-      let PICTURELINE = new Cesium.ImageMaterialProperty({
-        image: img,
-        repeat: new Cesium.Cartesian2(3, 1),
-      })
-      return PICTURELINE
-    }
-    if(type==="可通行公路"||type==="限制通行公路"||type==="不可通行公路"){
-      let NORMALLINE = new Cesium.PolylineDashMaterialProperty({
-          color: Cesium.Color.CYAN,
-          dashPattern: parseInt("110000001111", 1),
-        })
-      return NORMALLINE
-    }
-    if(type==="可通行铁路"||type==="不可通行铁路"){
-      let DASHLINE= new Cesium.PolylineDashMaterialProperty({
-        color: Cesium.Color.CYAN,
-        dashPattern: parseInt("110000001111", 2),
       })
       return DASHLINE
     }

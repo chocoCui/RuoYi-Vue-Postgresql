@@ -14,12 +14,14 @@ export default class Polyline {
     this.initId = null
     this.ws = ws
     this.material = null
-    this.flag = null
+    this.typeName = null
+    this.img = null
   }
 
   //激活
-  activate(material,flag) {
-    this.flag = flag
+  activate(material,typeName,img) {
+    this.img = img
+    this.typeName = typeName
     this.material = material
     this.status = 1
     this.positions = [];
@@ -37,7 +39,7 @@ export default class Polyline {
   deactivate() {
     this.unRegisterEvents();
     this.drawEntity = undefined;
-    // this.flag = null
+    // this.typeName = null
   }
 
   //解除鼠标事件
@@ -76,7 +78,7 @@ export default class Polyline {
         that.generatePolyline();
       }
       let distance = that.getSpaceDistance(that.positions)
-      document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
+      // document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
@@ -118,12 +120,18 @@ export default class Polyline {
   //绘制结束 触发结束事件
   drawEnd() {
     let that = this
+    let img = ""
+    if(that.typeName==="地裂缝"||that.typeName==="可用供水管网"||that.typeName==="不可用供水管网"){
+      img = this.img
+    }
     this.ws.send(JSON.stringify({
       type: "polyline",
       operate: "add",
       data: {
         id: that.initId,
-        positions: that.positions
+        type:that.typeName,
+        positions: that.positions,
+        img: img
       }
     }))
     this.status = 0
@@ -159,7 +167,7 @@ export default class Polyline {
       id: this.initId,
       polyline: {
         positions: new Cesium.CallbackProperty(e => {
-          if(that.flag==='pic'){
+          if(that.typeName==="地裂缝"||that.typeName==="可用供水管网"||that.typeName==="不可用供水管网"){
             let length = that.lineLength
             if (length === 0) {
               this.drawEntity.polyline.material.repeat._value.x = 3
@@ -252,7 +260,7 @@ export default class Polyline {
   }
 
   // 根据数据库中数据绘制线
-  getDrawPolyline(polylineArr) {
+  getDrawPolyline(polylineArr,getmaterial) {
     // 1-1 根据线的drawid记录有多少条线
     let onlyDrawId = this.distinguishPolylineId(polylineArr)
     // 1-2根据drawid来画线
@@ -271,7 +279,7 @@ export default class Polyline {
             position: new Cesium.Cartesian3(line[i].longitude, line[i].latitude, line[i].height),
             id: line[i].drawid + 'point' + (i + 1),
             point: {
-              pixelSize: 10,
+              pixelSize: 1,
               color: Cesium.Color.RED,
               outlineWidth: 2,
               outlineColor: Cesium.Color.DARKRED,
@@ -287,19 +295,15 @@ export default class Polyline {
         line.forEach(e => {
           positionsArr.push(new Cesium.Cartesian3(e.longitude, e.latitude, e.height))
         })
-
+        let material = getmaterial(line[0].pointtype,line[0].img)
         // 1-6 画线
         window.viewer.entities.add({
           id: onlyDrawIdItem,
           polyline: {
             positions: positionsArr,
             width: 5,
-            material: Cesium.Color.YELLOW,
-            // material: new Cesium.ImageMaterialProperty({
-            //   image: pic,
-            //   repeat: new Cesium.Cartesian2(10, 1), // 图片重复次数
-            //   speed: 5 // 流动速度
-            // }),
+            material: material,
+            // material: Cesium.Color.YELLOW,
             depthFailMaterial: Cesium.Color.YELLOW,
             clampToGround: true,
           },
@@ -321,6 +325,5 @@ export default class Polyline {
     })
     return PolylineIdArr
   }
-
 
 }

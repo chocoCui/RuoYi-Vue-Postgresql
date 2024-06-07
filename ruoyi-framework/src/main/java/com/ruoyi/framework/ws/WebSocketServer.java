@@ -159,7 +159,7 @@ public class WebSocketServer {
                     }
                     int resPolyline = insertPlotMore(spm);
                     log.info("asdf"+spm);
-                    log.info("插入成功："+resPolyline+"条");
+                    log.info("插入成功："+resPolyline+"条线");
                     break;
                 case "polygon":
                     for(int i=0;i<positions.size();i++){
@@ -179,7 +179,7 @@ public class WebSocketServer {
                     }
                     int resPolygon = insertPlotMore(spm);
                     log.info("asdf"+spm);
-                    log.info("插入成功："+resPolygon+"条");
+                    log.info("插入成功："+resPolygon+"个面");
                     break;
             }
         }
