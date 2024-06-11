@@ -35,7 +35,7 @@
         <div class="right-body">
           <div class="right-top public-bg">
             <div class="public-title">列表</div>
-            <eqTable/>
+            <eqTable :eqData="tableData" />
           </div>
           <!--          <div class="right-con public-bg">-->
           <!--            <div class="public-title">图表</div>-->
@@ -59,24 +59,34 @@ import chart1 from '@/components/Home/chart1.vue'
 import chart2 from '@/components/Home/chart2.vue'
 import chart3 from '@/components/Home/chart3.vue'
 import backgroundImg from '@/assets/home/homebackground.png'
+import {getAllEq} from '@/api/system/eqlist'
 
 export default {
   name: "home",
   data() {
     return {
       backgroundImg: backgroundImg,
-      nowtime: null
+      nowtime: null,
+      tableData:[],
     }
   },
   mounted(){
     setInterval(() => {
       this.nowtime = this.nowTime()
     }, 500);
+    this.getEq()
+
   },
   components: {
     eMap, eqTable, listInfo, newInfo, chart1, chart2, chart3
   },
   methods: {
+    getEq() {
+      let that = this
+      getAllEq().then(res => {
+        that.tableData = res
+      })
+    },
     go() {
       let route = this.$router.resolve({path: '/thd'}).href
       window.open(route, '_blank');

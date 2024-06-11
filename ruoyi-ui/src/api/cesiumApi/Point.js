@@ -13,7 +13,7 @@ export default class Point {
     this.refenceTypeList = refenceMarkPhotoList()
   }
   // 画点的屏幕事件
-  initPointHandlder(pointType,img) {
+  initPointHandlder(pointType,img,eqid) {
     let viewer = this.viewer
     let that = this
     that.handler.setInputAction((event) => {
@@ -24,6 +24,7 @@ export default class Point {
         img: null,
         type: null,
         id: null,
+        eqid:eqid
       }
       // 1-1 获取点击的位置的坐标信息（经度、纬度、高度）
       let ray = viewer.camera.getPickRay(event.position)

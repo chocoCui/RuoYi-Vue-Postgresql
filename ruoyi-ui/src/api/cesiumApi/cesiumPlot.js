@@ -18,14 +18,15 @@ let cesiumPlot= {
   },
   // 初始化点线面对象
   initDrawEdit() {
+    console.log(this.ws)
     this.point = new Point(this.viewer,this.store)
     this.polyline = new Polyline(this.viewer,this.ws)
     this.polygon = new Polygon(this.viewer,this.ws)
   },
 
   //------------------------------点---------------------------------
-  initPointHandler(pointType,img){
-    this.point.initPointHandlder(pointType,img)
+  initPointHandler(pointType,img,eqid){
+    this.point.initPointHandlder(pointType,img,eqid)
   },
 
   drawPoint(pointInfo){
@@ -38,9 +39,9 @@ let cesiumPlot= {
   //----------------------------------------------------------------
 
   //------------------------------线---------------------------------
-  drawActivatePolyline(type,img) {
+  drawActivatePolyline(type,img,eqid) {
     let material = this.getMaterial(type,img)
-    this.polyline.activate(material,type,img)
+    this.polyline.activate(material,type,img,eqid)
   },
   deletePolyline(polyline){
     this.polyline.deletePolyline(polyline)

@@ -208,7 +208,7 @@ export default {
       getPlotIcon().then(res => {
         that.getPicData = res
         that.total = res.length
-        that.tableData = that.getPageArr(res)
+        that.tableData = that.getPageArr()
       })
     },
     // 在dialog对话框中上传img时触发

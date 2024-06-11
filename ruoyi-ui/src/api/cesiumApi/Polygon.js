@@ -120,6 +120,7 @@ export default class Polygon {
     let that = this
     return this.viewer.entities.add({
       id: that.initId + "Point" + that.lastItem,
+      show: false,
       position: position,
       point: {
         color: Cesium.Color.SKYBLUE,
@@ -308,6 +309,7 @@ export default class Polygon {
       let pointLinePoints = []
       for (let i = 0; i < polygon.length; i++) {
         let p = window.viewer.entities.add({
+          show: false,
           position: new Cesium.Cartesian3(polygon[i].longitude, polygon[i].latitude, polygon[i].height),
           id: polygon[i].drawid + 'Point' + (i + 1),
           point: {

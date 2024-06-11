@@ -10,17 +10,18 @@ const cesium = {
       time: null,
       name: null,
       describe: null,
+      eqid:null
     },
   },
   mutations: {
     SET_POINTINFO1: (state,pointInfo)=>{
-      console.log(state,pointInfo)
       state.pointInfo.lat = pointInfo.lat
       state.pointInfo.lon = pointInfo.lon
       state.pointInfo.height = pointInfo.height
       state.pointInfo.type = pointInfo.type
       state.pointInfo.id = pointInfo.id
       state.pointInfo.img = pointInfo.img
+      state.pointInfo.eqid = pointInfo.eqid
     },
     SET_POINTINFO2:(state,pointInfo)=>{
       state.pointInfo.time = pointInfo.time

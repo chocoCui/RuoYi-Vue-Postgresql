@@ -16,10 +16,13 @@ export default class Polyline {
     this.material = null
     this.typeName = null
     this.img = null
+    this.eqid = null
   }
 
   //激活
-  activate(material,typeName,img) {
+  activate(material,typeName,img,eqid) {
+    console.log(this.ws)
+    this.eqid = eqid
     this.img = img
     this.typeName = typeName
     this.material = material
@@ -78,7 +81,9 @@ export default class Polyline {
         that.generatePolyline();
       }
       let distance = that.getSpaceDistance(that.positions)
-      // document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
+      if(this.typeName ==="量算"){
+        document.getElementById("distanceLine").innerHTML = distance.toFixed(2)
+      }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
 
@@ -124,6 +129,7 @@ export default class Polyline {
     if(that.typeName==="地裂缝"||that.typeName==="可用供水管网"||that.typeName==="不可用供水管网"){
       img = this.img
     }
+    console.log(this.ws)
     this.ws.send(JSON.stringify({
       type: "polyline",
       operate: "add",
@@ -131,7 +137,8 @@ export default class Polyline {
         id: that.initId,
         type:that.typeName,
         positions: that.positions,
-        img: img
+        img: img,
+        eqid: that.eqid
       }
     }))
     this.status = 0
@@ -146,13 +153,14 @@ export default class Polyline {
     let that = this
     this.lineLength = this.getSpaceDistance(this.positions)
     return this.viewer.entities.add({
+      show: false,
       position: position,
       id: that.initId + "point" + that.index,
       point: {
         pixelSize: 1,
         color: Cesium.Color.RED,
-        outlineWidth: 2,
-        outlineColor: Cesium.Color.DARKRED,
+        // outlineWidth: 0,
+        // outlineColor: Cesium.Color.DARKRED,
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,// 绑定到地形高度,让billboard贴地
         depthTest: false,//禁止深度测试但是没有下面那句有用
         disableDepthTestDistance: Number.POSITIVE_INFINITY//不再进行深度测试（真神）
@@ -276,10 +284,11 @@ export default class Polyline {
         let pointLinePoints = []
         for (let i = 0; i < line.length; i++) {
           let p = window.viewer.entities.add({
+            show: false,
             position: new Cesium.Cartesian3(line[i].longitude, line[i].latitude, line[i].height),
             id: line[i].drawid + 'point' + (i + 1),
             point: {
-              pixelSize: 1,
+              pixelSize: 0,
               color: Cesium.Color.RED,
               outlineWidth: 2,
               outlineColor: Cesium.Color.DARKRED,

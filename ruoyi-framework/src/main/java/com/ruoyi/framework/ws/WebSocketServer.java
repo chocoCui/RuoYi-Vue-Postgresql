@@ -111,7 +111,7 @@ public class WebSocketServer {
             log.info("成功删除"+resDelete+"条");
         }else if(Objects.equals(operate, "add")){
             String drawType = jsonObject.getString("type");
-            String eqid = "ckwtest123";
+            String eqid = data.getString("eqid");
             String latitude = data.getString("lat");
             String longitude = data.getString("lon");
             String timestamp = "";

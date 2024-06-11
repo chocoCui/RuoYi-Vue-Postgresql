@@ -1,7 +1,7 @@
 <template>
   <div id="cesiumContainer">
     <div class="eqList">
-      <button @click="eqListShow = !eqListShow">
+      <button @click="changeEqListShow">
         <div>
           地震列表
         </div>
@@ -12,7 +12,7 @@
         </div>
       </button>
       <transition name="eqListfade">
-        <eqListTable v-if="eqListShow"/>
+        <eqListTable :eqData="tableData" v-if="eqListShow" @plotAdj="plotAdj"/>
       </transition>
     </div>
     <commonPanel
@@ -36,6 +36,7 @@ import {markPhotoList, matchMark, refenceMarkPhotoList} from "@/api/cesiumApi/to
 import {getPloy} from "@/api/system/plot"
 import eqListTable from "@/components/Thd/eqListTable";
 import {initWebSocket} from '@/api/WS.js'
+import {getAllEq} from '@/api/system/eqlist'
 
 export default {
   components: {
@@ -57,16 +58,22 @@ export default {
       eqListShow: false,
       //-----------------图层---------------------
       LRDLStatus: false, // 路网
+      //--------------------------------------
+      tableData:[],
+      eqid:''
     };
   },
   mounted() {
     this.init()
-    this.initWebsocket()
+
     // 生成实体点击事件的handler
     this.entitiesClickPonpHandler()
     this.watchTerrainProviderChanged()
     cesiumPlot.init(window.viewer, this.websock, this.$store)
-    this.initPlot("ckwtest123")
+    // console.log(this.$router.currentRoute.query.eqid)
+    this.eqid = this.$router.currentRoute.query.eqid
+    this.initPlot(this.eqid)
+    this.initWebsocket()
     //-----------------------------------------
   },
   destroyed() {
@@ -126,6 +133,7 @@ export default {
 
     initWebsocket() {
       this.websock = initWebSocket()
+      this.websock.eqid = this.eqid
     },
     //------------------------------------------
 
@@ -301,6 +309,26 @@ export default {
       })
       // addImageryProvider是创建了一个图层，需要用viewer.scene.imageryLayers.remove移除
       window.LRDL = window.viewer.imageryLayers.addImageryProvider(LRDL);
+    },
+    // ------------------------------------------
+    getEq() {
+      let that = this
+      getAllEq().then(res => {
+        that.tableData = res
+      })
+    },
+    changeEqListShow(){
+      this.eqListShow = !this.eqListShow
+      if(this.eqListShow){
+        this.getEq()
+      }
+    },
+    plotAdj(row){
+      console.log(row)
+      window.viewer.entities.removeAll();
+      this.eqid = row.eqid
+      this.websock.eqid = this.eqid
+      this.initPlot(row.eqid)
     },
   }
 }

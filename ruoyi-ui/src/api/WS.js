@@ -4,7 +4,7 @@ let webSocket
 
 export function initWebSocket() {
   const currentTime = Date.now();
-  const wsuri = "ws://localhost:8080/ws/" + currentTime;
+  const wsuri = "ws://192.168.3.18:8080/ws/" + currentTime;
   if (typeof (WebSocket) == "undefined") {
     console.log("您的浏览器不支持WebSocket");
   } else {
@@ -13,6 +13,7 @@ export function initWebSocket() {
     webSocket.onopen = websocketonopen;
     webSocket.onerror = websocketonerror;
     webSocket.onclose = websocketclose;
+    webSocket.eqid = ''
   }
   return webSocket
 }
@@ -20,6 +21,7 @@ export function initWebSocket() {
 //连接建立之后执行send方法发送数据
 function websocketonopen() {
   let actions = {"test": "我已在线"};
+  console.log(this.eqid,this)
   webSocket.send(JSON.stringify(actions));
   // websocketsend(JSON.stringify(actions));
 }
@@ -36,36 +38,43 @@ function websocketclose(e) {
 
 function websocketonmessage(e){
   // this.$modal.msg(e.data);
+
   try {
-    let markType = JSON.parse(e.data).type
-    let markOperate = JSON.parse(e.data).operate // 标绘的（add、delete）
-    if(markOperate==="add"){
-      let markData = JSON.parse(e.data).data
-      wsAdd(markType,markData)
-    }
-    else if(markOperate === "delete"){
-      let id = JSON.parse(e.data).id
-      if(markType === "point"){
-        window.viewer.entities.removeById(id)
+    // console.log(this.eqid,1)
+    // console.log(JSON.parse(e.data).data.eqid,1)
+
+      let markType = JSON.parse(e.data).type
+      let markOperate = JSON.parse(e.data).operate // 标绘的（add、delete）
+      if(markOperate==="add"){
+        if(this.eqid===JSON.parse(e.data).data.eqid) {
+          let markData = JSON.parse(e.data).data
+          wsAdd(markType, markData)
+        }
       }
-      else if(markType === "polyline"){
-        let polyline = window.viewer.entities.getById(id)
-        let polylinePosition = polyline.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
-        polylinePosition.pointPosition.forEach((item, index) => {
-          window.viewer.entities.remove(item)
-        })
-        window.viewer.entities.remove(polyline)
+      else if(markOperate === "delete"){
+        let id = JSON.parse(e.data).id
+        if(markType === "point"){
+          window.viewer.entities.removeById(id)
+        }
+        else if(markType === "polyline"){
+          let polyline = window.viewer.entities.getById(id)
+          console.log(id,polyline,window.viewer.entities,123)
+          let polylinePosition = polyline.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+          polylinePosition.pointPosition.forEach((item, index) => {
+            window.viewer.entities.remove(item)
+          })
+          window.viewer.entities.remove(polyline)
+        }
+        else if(markType === "polygon"){
+          let polygon = window.viewer.entities.getById(id)
+          let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
+          polygonPosition.linePoint.forEach((item, index) => {
+            console.log(item)
+            window.viewer.entities.remove(item)
+          })
+          window.viewer.entities.remove(polygon)
+        }
       }
-      else if(markType === "polygon"){
-        let polygon = window.viewer.entities.getById(id)
-        let polygonPosition = polygon.properties.getValue(Cesium.JulianDate.now())//用getvalue时添加时间是不是用来当日志的？
-        polygonPosition.linePoint.forEach((item, index) => {
-          console.log(item)
-          window.viewer.entities.remove(item)
-        })
-        window.viewer.entities.remove(polygon)
-      }
-    }
   } catch (err){
     console.log(err,'error错咯');
   }
@@ -104,6 +113,7 @@ function wsAdd(type,data){
     let pointLinePoints = []
     for(let i=0;i<data.positions.length;i++){
       let p = window.viewer.entities.add({
+        show: false,
         position: data.positions[i],
         id: data.id + 'point' + (i+1),
         point: {
@@ -120,7 +130,7 @@ function wsAdd(type,data){
     }
     let material = getMaterial(data.type,data.img)
     window.viewer.entities.add({
-      id: data.id + 'polyline',
+      id: data.id, //+ 'polyline',
       polyline:{
         positions: data.positions,
         width: 5,
@@ -139,6 +149,7 @@ function wsAdd(type,data){
     for(let i=0;i<data.positions.length;i++){
       let p = window.viewer.entities.add({
         id: data.id + 'Point' + (i+1),
+        show: false,
         position: data.positions[i],
         point: {
           color: Cesium.Color.SKYBLUE,

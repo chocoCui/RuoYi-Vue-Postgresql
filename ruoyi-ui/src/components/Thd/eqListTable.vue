@@ -6,12 +6,11 @@
       :stripe="true"
       :header-cell-style="tableHeaderColor"
       :cell-style="tableColor"
-      @row-click="go"
+      @row-click="plotAdj"
     >
       <el-table-column
         prop="position"
-        label="位置"
-        width="100">
+        label="位置">
       </el-table-column>
       <el-table-column
         prop="time"
@@ -36,14 +35,16 @@
       <el-table-column
         prop="depth"
         label="深度"
-      >
+        width="50">
       </el-table-column>
     </el-table>
     <el-pagination
-      background
-      small
-      layout="prev, pager, next"
-      :total="1000">
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      layout="total, prev, pager, next, jumper"
+      :total="total">
     </el-pagination>
   </div>
 </template>
@@ -53,95 +54,25 @@ export default {
   name: "eqListTable",
   data() {
     return {
-      tableData: [
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13',
-          eqId:'ckw123'
-        },
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13'
-        },
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13'
-        },
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13'
-        },
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13'
-        },
-        {
-          position:'四川德阳市绵竹市',
-          time:'2024-05-15 08:49:10',
-          magnitude:'3.0',
-          longitude:'104.05',
-          latitude:'31.55',
-          depth:'13'
-        },
-        // {
-        //   position:'四川德阳市绵竹市',
-        //   time:'2024-05-15 08:49:10',
-        //   magnitude:'3.0',
-        //   longitude:'104.05',
-        //   latitude:'31.55',
-        //   depth:'13'
-        // },
-        // {
-        //   position:'四川德阳市绵竹市',
-        //   time:'2024-05-15 08:49:10',
-        //   magnitude:'3.0',
-        //   longitude:'104.05',
-        //   latitude:'31.55',
-        //   depth:'13'
-        // },
-        // {
-        //   position:'四川德阳市绵竹市',
-        //   time:'2024-05-15 08:49:10',
-        //   magnitude:'3.0',
-        //   longitude:'104.05',
-        //   latitude:'31.55',
-        //   depth:'13'
-        // },
-        // {
-        //   position:'四川德阳市绵竹市',
-        //   time:'2024-05-15 08:49:10',
-        //   magnitude:'3.0',
-        //   longitude:'104.05',
-        //   latitude:'31.55',
-        //   depth:'13'
-        // },
-      ]
+      total: 0,
+      pageSize: 6,
+      currentPage: 1,
+      getEqData:[],
+      tableData: [],
+
+    }
+  },
+  props:['eqData'],
+  watch:{
+    eqData(){
+      this.getEqData = this.eqData
+      this.total = this.eqData.length
+      this.tableData = this.getPageArr()
     }
   },
   methods:{
-    go(row, column, cell, event){
-      let route = this.$router.resolve({path: '/thd'}).href
-      // window.open(route, '_blank');
+    plotAdj(row){
+      this.$emit('plotAdj',row)
     },
     tableHeaderColor(){
       return 'border-color:#313a44;background-color: #313a44;color: #fff;padding: 0;text-align:center'
@@ -153,6 +84,31 @@ export default {
       }else{
         return 'border-color:#304156;background-color: #304156;color:#fff;padding: 0;text-align:center'
       }
+    },
+    // 对数据库获取到的标绘图片数组切片
+    getPageArr() {
+      let arr = []
+      let start = (this.currentPage - 1) * this.pageSize
+      let end = this.currentPage * this.pageSize
+      if (end > this.total) {
+        end = this.total
+      }
+      for (; start < end; start++) {
+        arr.push(this.getEqData[start])
+      }
+      return arr
+    },
+    //`每页 ${val} 条`
+    handleSizeChange(val) {
+      this.pageSize = val
+      this.tableData = this.getPageArr()
+      // console.log(`每页 ${val} 条`);
+    },
+    // `当前页: ${val}`
+    handleCurrentChange(val) {
+      this.currentPage = val
+      this.tableData = this.getPageArr()
+      // console.log(`当前页: ${val}`);
     },
   }
 }
@@ -166,6 +122,7 @@ export default {
   background: rgba(57,55,53,80%);
   margin-left: 10px;
   padding: 10px;
+  width: 500px;
 }
 .el-table::before, .el-table--group::after, .el-table--border::after{
   background-color: #304156!important;
