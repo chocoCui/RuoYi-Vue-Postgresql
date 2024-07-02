@@ -4,7 +4,7 @@ let webSocket
 
 export function initWebSocket() {
   const currentTime = Date.now();
-  const wsuri = "ws://192.168.3.18:8080/ws/" + currentTime;
+  const wsuri = "ws://localhost:8080/ws/" + currentTime;
   if (typeof (WebSocket) == "undefined") {
     console.log("您的浏览器不支持WebSocket");
   } else {

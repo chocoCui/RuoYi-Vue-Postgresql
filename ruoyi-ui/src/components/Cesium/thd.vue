@@ -38,6 +38,8 @@ import eqListTable from "@/components/Thd/eqListTable";
 import {initWebSocket} from '@/api/WS.js'
 import {getAllEq} from '@/api/system/eqlist'
 
+import geojsonmap from '@/assets/geoJson/map.json'
+
 export default {
   components: {
     commonPanel, eqListTable
@@ -103,6 +105,17 @@ export default {
       document.getElementsByClassName('cesium-geocoder-input')[0].placeholder = '请输入地名进行搜索'
       document.getElementsByClassName('cesium-baseLayerPicker-sectionTitle')[0].innerHTML = '影像服务'
       document.getElementsByClassName('cesium-baseLayerPicker-sectionTitle')[1].innerHTML = '地形服务'
+
+      viewer.dataSources.add(
+        Cesium.GeoJsonDataSource.load(
+          geojsonmap,
+          {
+            stroke: Cesium.Color.RED,   // 边框颜色
+            // fill: Cesium.Color.RED.withAlpha(0.5),  // 填充颜色
+            strokeWidth: 3, // 边框宽度
+          })
+      );
+
     },
     //-----------------------------------------
     initPlot(drawId) {
